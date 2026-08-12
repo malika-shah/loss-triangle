@@ -3,21 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Loss Triangle</title>
+  <title>Loss Triangle | Zombie Risk Simulator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: rgba(20, 27, 45, 0.75);
-      --border: rgba(255, 255, 255, 0.12);
-      --accent-cyan: #38bdf8;
-      --accent-green: #34d399;
-      --accent-amber: #fbbf24;
-      --accent-purple: #c084fc;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
+      --bg: #070a12;
+      --card: rgba(16, 23, 42, 0.85);
+      --border: rgba(57, 255, 20, 0.2);
+      --green: #39ff14; /* Toxic Green */
+      --cyan: #00f3ff;  /* Bio Cyan */
+      --magenta: #ff0055; /* Outbreak Red */
+      --amber: #ffaa00; /* Hazard Amber */
+      --purple: #bf00ff; /* Mutation Purple */
+      --text: #f1f5f9;
+      --text-muted: #64748b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 
     body {
       background: var(--bg);
@@ -27,378 +29,238 @@
       display: flex;
       flex-direction: column;
       gap: 1.25rem;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(57, 255, 20, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(255, 0, 85, 0.03) 0%, transparent 40%);
     }
 
     header {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.75rem;
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
     }
 
-    h1 { font-size: 1.8rem; font-weight: 700; color: #fff; }
-    p.subtitle { color: var(--text-muted); font-size: 0.9rem; }
+    .title-group h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 30%, var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle { color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem; }
+
+    /* Top Grid: Animation & Solvency */
+    .top-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.25rem;
+    }
 
     .card {
-      background: var(--card-bg);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 1.25rem;
-      backdrop-filter: blur(12px);
-    }
-
-    /* VISUAL CLAIM LIFECYCLE STORYBOARD */
-    .story-header {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--accent-amber);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.75rem;
-    }
-
-    .pipeline-container {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       position: relative;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 1rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--cyan);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
-    .pipeline-step {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
+    /* Animation Canvas & Controls */
+    #outbreak-canvas {
+      width: 100%;
+      height: 160px;
+      background: rgba(0, 0, 0, 0.4);
       border-radius: 10px;
-      padding: 1rem;
-      text-align: center;
-      transition: all 0.3s ease;
-      opacity: 0.4;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
     }
-
-    .pipeline-step.active {
-      opacity: 1;
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
-      transform: translateY(-2px);
-    }
-
-    .pipeline-step.completed {
-      opacity: 0.8;
-      border-color: var(--accent-green);
-    }
-
-    .step-icon { font-size: 2rem; margin-bottom: 0.4rem; }
-    .step-title { font-weight: 600; font-size: 0.85rem; }
-    .step-cost { font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan); margin-top: 0.3rem; }
 
     .story-controls {
       display: flex;
       gap: 0.75rem;
       align-items: center;
-      margin-top: 0.5rem;
+      margin-top: 1rem;
     }
 
     button {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 0.6rem 1.2rem;
+      padding: 0.65rem 1.25rem;
       border-radius: 8px;
+      font-weight: 700;
       cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
     }
 
-    button:hover { background: rgba(255, 255, 255, 0.2); }
-    button.primary { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
-    button.primary:hover { background: #7dd3fc; }
+    button:hover {
+      background: rgba(57, 255, 20, 0.15);
+      border-color: var(--green);
+      color: var(--green);
+      transform: translateY(-2px);
+    }
 
-    /* TRIANGLE & LDF DISPLAY */
-    .triangle-grid {
+    button.btn-primary {
+      background: var(--green);
+      color: #000;
+      border-color: var(--green);
+      box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+    }
+
+    button.btn-primary:hover {
+      background: #50ff30;
+      box-shadow: 0 0 25px rgba(57, 255, 20, 0.7);
+      color: #000;
+    }
+
+    button.btn-hazard {
+      border-color: var(--magenta);
+      color: var(--magenta);
+    }
+    button.btn-hazard:hover {
+      background: rgba(255, 0, 85, 0.2);
+    }
+
+    /* Solvency Gauge HUD */
+    .hud-stat {
+      text-align: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      border-left: 4px solid var(--green);
+      margin-bottom: 0.75rem;
+    }
+
+    .hud-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-top: 0.2rem;
+      font-family: monospace;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 0.5rem;
+    }
+
+    .pill-safe { background: rgba(57, 255, 20, 0.2); color: var(--green); border: 1px solid var(--green); }
+    .pill-danger { background: rgba(255, 0, 85, 0.2); color: var(--magenta); border: 1px solid var(--magenta); animation: blink 1s infinite; }
+
+    @keyframes blink { 50% { opacity: 0.5; } }
+
+    /* Bottom Grid: Triangle & Math */
+    .bottom-grid {
       display: grid;
-      grid-template-columns: 2.5fr 1fr;
+      grid-template-columns: 2.2fr 1fr;
       gap: 1.25rem;
     }
 
-    @media (max-width: 900px) {
-      .triangle-grid { grid-template-columns: 1fr; }
-      .pipeline-container { grid-template-columns: repeat(2, 1fr); }
+    .table-container { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 4px;
     }
 
-    .table-wrapper { overflow-x: auto; }
-
-    table { width: 100%; border-collapse: separate; border-spacing: 4px; }
     th, td {
-      padding: 0.75rem;
+      padding: 0.65rem;
       text-align: center;
       font-size: 0.85rem;
       border-radius: 6px;
+      font-family: monospace;
+      position: relative;
     }
 
-    th { background: rgba(0,0,0,0.4); color: var(--text-muted); font-weight: 600; }
+    th { background: rgba(0, 0, 0, 0.5); color: var(--text-muted); font-weight: 700; }
     
-    /* Explicit LDF Column Headers */
-    .ldf-header {
-      background: rgba(192, 132, 252, 0.15);
-      color: var(--accent-purple);
+    th.ldf-col-header {
+      background: rgba(191, 0, 255, 0.15);
+      color: var(--purple);
+      border: 1px dashed rgba(191, 0, 255, 0.4);
+    }
+
+    td.cell-actual {
+      background: rgba(0, 243, 255, 0.1);
+      color: var(--cyan);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      cursor: pointer;
       font-weight: 700;
-      font-size: 0.8rem;
-      border: 1px dashed rgba(192, 132, 252, 0.4);
     }
 
-    td.actual { background: rgba(56, 189, 248, 0.12); color: var(--accent-cyan); font-weight: 600; }
-    td.highlight { background: rgba(56, 189, 248, 0.4) !important; color: #fff; font-weight: 700; animation: pulse 0.6s ease; }
-    td.forecast { background: rgba(192, 132, 252, 0.1); color: var(--accent-purple); font-style: italic; }
-    td.ldf-cell { background: rgba(192, 132, 252, 0.05); color: var(--accent-purple); font-weight: 700; }
-    
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-      100% { transform: scale(1); }
+    td.cell-actual:hover {
+      background: rgba(0, 243, 255, 0.25);
+      border-color: var(--cyan);
     }
 
-    /* Math Cards for Data Scientists */
-    .formula-box {
-      background: rgba(0,0,0,0.3);
-      border-left: 3px solid var(--accent-purple);
-      padding: 0.75rem;
+    td.cell-outlier {
+      text-decoration: line-through;
+      opacity: 0.35;
+      background: rgba(255, 0, 85, 0.15);
+      color: var(--magenta);
+      border-color: var(--magenta);
+    }
+
+    td.cell-forecast {
+      background: rgba(191, 0, 255, 0.1);
+      color: var(--purple);
+      border: 1px dashed rgba(191, 0, 255, 0.3);
+      font-style: italic;
+    }
+
+    td.cell-ldf {
+      background: rgba(191, 0, 255, 0.05);
+      color: var(--purple);
+      font-weight: 800;
+      cursor: help;
+    }
+
+    td.cell-ldf:hover {
+      background: rgba(191, 0, 255, 0.25);
+      box-shadow: 0 0 10px rgba(191, 0, 255, 0.5);
+    }
+
+    /* Math Tooltip Card */
+    .math-card {
+      background: rgba(0, 0, 0, 0.6);
+      border-left: 3px solid var(--purple);
+      padding: 0.8rem;
       border-radius: 6px;
-      margin-bottom: 1rem;
+      margin-bottom: 0.8rem;
       font-size: 0.8rem;
       line-height: 1.4;
     }
 
-    .formula-title { color: var(--accent-purple); font-weight: 700; margin-bottom: 0.2rem; }
-  </style>
-</head>
-<body>
+    .math-title { color: var(--purple); font-weight: 700; margin-bottom: 0.3rem; }
 
-  <header>
-    <div>
-      <h1>Loss Triangle 📐</h1>
-      <p class="subtitle">How real-world events develop into actuarial forecasts & link ratios (LDFs).</p>
-    </div>
-  </header>
-
-  <div class="card">
-    <div class="story-header">🚗 Interactive Event Simulator (Accident Year 2024)</div>
-    
-    <div class="pipeline-container">
-      <div id="step-0" class="pipeline-step active">
-        <div class="step-icon">💥🌳</div>
-        <div class="step-title">1. Tree Collision</div>
-        <div class="step-cost">$1,200</div>
-        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem;">Initial Tow & Claim Reserve</div>
-      </div>
-
-      <div id="step-1" class="pipeline-step">
-        <div class="step-icon">🛠️🚘</div>
-        <div class="step-title">2. Engine & Body Repair</div>
-        <div class="step-cost">+$2,400</div>
-        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem;">Cumulative: $3,600</div>
-      </div>
-
-      <div id="step-2" class="pipeline-step">
-        <div class="step-icon">🎨🚿</div>
-        <div class="step-title">3. Paint & Diagnostics</div>
-        <div class="step-cost">+$720</div>
-        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem;">Cumulative: $4,320</div>
-      </div>
-
-      <div id="step-3" class="pipeline-step">
-        <div class="step-icon">🔑✅</div>
-        <div class="step-title">4. Car Returned / Closed</div>
-        <div class="step-cost">+$216</div>
-        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem;">Final Settlement: $4,536</div>
-      </div>
-    </div>
-
-    <div class="story-controls">
-      <button class="primary" onclick="advanceClaimStory()">▶️ Step Claim Forward</button>
-      <button onclick="resetStory()">🔄 Reset Claim Journey</button>
-      <span id="story-status" style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">
-        Current Dev Year: <strong>1 (0-12m)</strong>
-      </span>
-    </div>
-  </div>
-
-  <div class="triangle-grid">
-    
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-        <span style="font-weight: 600; color: var(--accent-cyan); font-size: 0.95rem;">Cumulative Paid Losses Matrix</span>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">* Purple cells are Chain Ladder projections</span>
-      </div>
-
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th style="text-align: left;">Accident Year</th>
-              <th>Dev 1<br>(0-12m)</th>
-              <th class="ldf-header">LDF 1→2</th>
-              <th>Dev 2<br>(12-24m)</th>
-              <th class="ldf-header">LDF 2→3</th>
-              <th>Dev 3<br>(24-36m)</th>
-              <th class="ldf-header">LDF 3→4</th>
-              <th>Dev 4<br>(36-48m)</th>
-            </tr>
-          </thead>
-          <tbody id="triangle-tbody">
-            </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="font-weight: 600; color: var(--accent-purple); font-size: 0.95rem; margin-bottom: 0.75rem;">
-        🧠 Data Science & Math Corner
-      </div>
-
-      <div class="formula-box">
-        <div class="formula-title">Loss Development Factor (LDF)</div>
-        <code>LDF<sub>j</sub> = Σ Cumulative Cost<sub>j+1</sub> / Σ Cumulative Cost<sub>j</sub></code>
-        <div style="margin-top: 0.4rem; color: var(--text-muted);">
-          Measures the average multiplier factor as historical claims age from stage to stage.
-        </div>
-      </div>
-
-      <div class="formula-box" style="border-left-color: var(--accent-cyan);">
-        <div class="formula-title" style="color: var(--accent-cyan);">The Chain Ladder Method</div>
-        <code>Future Estimate = Current Cumulative Cost × LDF<sub>j</sub></code>
-        <div style="margin-top: 0.4rem; color: var(--text-muted);">
-          Actuaries project the blank bottom-right triangle cells by chaining historical LDF factors.
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    // Story cumulative amounts for AY 2024
-    const storyValues = [1200, 3600, 4320, 4536];
-    let currentStep = 0;
-
-    // Historical Base Triangle (Cumulative $ Thousands)
-    const baseData = [
-      [1000, 3000, 3600, 3780], // AY 2021
-      [1100, 3300, 3960, null], // AY 2022
-      [1050, 3150, null, null], // AY 2023
-      [1200, null, null, null]  // AY 2024 (Active Story Year)
-    ];
-
-    function calculateLDFs(matrix) {
-      let ldfs = [];
-      for (let c = 0; c < 3; c++) {
-        let sumCurrent = 0;
-        let sumNext = 0;
-        for (let r = 0; r < 3 - c; r++) {
-          if (matrix[r][c] !== null && matrix[r][c+1] !== null) {
-            sumCurrent += matrix[r][c];
-            sumNext += matrix[r][c+1];
-          }
-        }
-        ldfs.push(sumCurrent > 0 ? (sumNext / sumCurrent) : 1.0);
-      }
-      return ldfs;
+    /* Responsive */
+    @media (max-width: 900px) {
+      .top-grid, .bottom-grid { grid-template-columns: 1fr; }
     }
-
-    function renderTriangle() {
-      // Build matrix state
-      let matrix = JSON.parse(JSON.stringify(baseData));
-      
-      // Update AY 2024 (row 3) up to the current story step
-      for (let i = 0; i <= currentStep; i++) {
-        matrix[3][i] = storyValues[i];
-      }
-
-      // Compute weighted LDFs based on visible cells
-      const ldfs = calculateLDFs(matrix);
-
-      // Forecast missing cells using computed LDFs
-      for (let r = 0; r < 4; r++) {
-        for (let c = 0; c < 4; c++) {
-          if (matrix[r][c] === null) {
-            const prev = matrix[r][c-1];
-            const factor = ldfs[c-1];
-            matrix[r][c] = Math.round(prev * factor);
-          }
-        }
-      }
-
-      // Render Table
-      const tbody = document.getElementById('triangle-tbody');
-      tbody.innerHTML = '';
-      const years = ['2021', '2022', '2023', '2024'];
-
-      for (let r = 0; r < 4; r++) {
-        const tr = document.createElement('tr');
-        
-        // AY Label
-        const th = document.createElement('td');
-        th.style.textAlign = 'left';
-        th.style.fontWeight = '600';
-        th.style.color = 'var(--text-muted)';
-        th.innerText = `AY ${years[r]}`;
-        tr.appendChild(th);
-
-        for (let c = 0; c < 4; c++) {
-          // Data Cell
-          const td = document.createElement('td');
-          const isActual = (r + c < 4) && !(r === 3 && c > currentStep);
-
-          if (isActual) {
-            td.className = (r === 3 && c === currentStep) ? 'actual highlight' : 'actual';
-            td.innerText = `$${matrix[r][c].toLocaleString()}`;
-          } else {
-            td.className = 'forecast';
-            td.innerText = `$${matrix[r][c].toLocaleString()}*`;
-          }
-          tr.appendChild(td);
-
-          // Insert LDF Column between Dev columns
-          if (c < 3) {
-            const ldfTd = document.createElement('td');
-            ldfTd.className = 'ldf-cell';
-            ldfTd.innerText = `${ldfs[c].toFixed(2)}x`;
-            tr.appendChild(ldfTd);
-          }
-        }
-        tbody.appendChild(tr);
-      }
-    }
-
-    function advanceClaimStory() {
-      if (currentStep < 3) {
-        currentStep++;
-        updatePipelineUI();
-        renderTriangle();
-      }
-    }
-
-    function resetStory() {
-      currentStep = 0;
-      updatePipelineUI();
-      renderTriangle();
-    }
-
-    function updatePipelineUI() {
-      for (let i = 0; i < 4; i++) {
-        const stepElem = document.getElementById(`step-${i}`);
-        stepElem.classList.remove('active', 'completed');
-        if (i === currentStep) {
-          stepElem.classList.add('active');
-        } else if (i < currentStep) {
-          stepElem.classList.add('completed');
-        }
-      }
-      document.getElementById('story-status').innerHTML = 
-        `Current Dev Year: <strong>${currentStep + 1} (Dev Year ${currentStep + 1})</strong>`;
-    }
-
-    // Initial Load
-    renderTriangle();
-  </script>
-</body>
-</html>
+  </style
