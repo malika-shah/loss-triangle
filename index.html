@@ -3,213 +3,272 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Actuary Roulette | Loss Reserving Sandbox</title>
+  <title>Loss Triangle</title>
   <style>
     :root {
-      --bg: #0b0f19;
-      --card-bg: rgba(23, 31, 51, 0.7);
-      --border: rgba(255, 255, 255, 0.1);
-      --accent-blue: #38bdf8;
+      --bg: #090d16;
+      --card-bg: rgba(20, 27, 45, 0.75);
+      --border: rgba(255, 255, 255, 0.12);
+      --accent-cyan: #38bdf8;
       --accent-green: #34d399;
-      --accent-red: #f87171;
+      --accent-amber: #fbbf24;
       --accent-purple: #c084fc;
       --text: #f3f4f6;
       --text-muted: #9ca3af;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    
+
     body {
       background: var(--bg);
       color: var(--text);
-      padding: 2rem;
+      padding: 1.5rem;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.25rem;
     }
 
     header {
       border-bottom: 1px solid var(--border);
-      padding-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
     }
 
-    h1 { font-size: 1.8rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
-    p.subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 0.25rem; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: #fff; }
+    p.subtitle { color: var(--text-muted); font-size: 0.9rem; }
 
-    /* Layout Grid */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 1.5rem;
-    }
-
-    @media (max-width: 900px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
-    }
-
-    /* Cards */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 1.25rem;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
     }
 
-    .card-title {
-      font-size: 1rem;
+    /* VISUAL CLAIM LIFECYCLE STORYBOARD */
+    .story-header {
+      font-size: 0.9rem;
       font-weight: 600;
-      margin-bottom: 1rem;
-      color: var(--accent-blue);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      color: var(--accent-amber);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
     }
 
-    /* Controls */
-    .controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
-    
+    .pipeline-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .pipeline-step {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      opacity: 0.4;
+    }
+
+    .pipeline-step.active {
+      opacity: 1;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .pipeline-step.completed {
+      opacity: 0.8;
+      border-color: var(--accent-green);
+    }
+
+    .step-icon { font-size: 2rem; margin-bottom: 0.4rem; }
+    .step-title { font-weight: 600; font-size: 0.85rem; }
+    .step-cost { font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan); margin-top: 0.3rem; }
+
+    .story-controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
     button {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       border-radius: 8px;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.2s ease;
     }
 
-    button:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
-    button.active { background: var(--accent-blue); color: #000; border-color: var(--accent-blue); font-weight: 600; }
-    button.chaos-btn { border-color: rgba(248, 113, 113, 0.4); color: var(--accent-red); }
-    button.chaos-btn:hover { background: rgba(248, 113, 113, 0.2); }
+    button:hover { background: rgba(255, 255, 255, 0.2); }
+    button.primary { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
+    button.primary:hover { background: #7dd3fc; }
 
-    /* Triangle Table Grid */
-    .table-container { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    /* TRIANGLE & LDF DISPLAY */
+    .triangle-grid {
+      display: grid;
+      grid-template-columns: 2.5fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 900px) {
+      .triangle-grid { grid-template-columns: 1fr; }
+      .pipeline-container { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .table-wrapper { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 4px; }
     th, td {
-      padding: 0.6rem 0.8rem;
-      text-align: right;
+      padding: 0.75rem;
+      text-align: center;
       font-size: 0.85rem;
-      font-mono: monospace;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
     }
-    th { background: rgba(0, 0, 0, 0.3); color: var(--text-muted); font-weight: 600; }
-    th.first-col, td.first-col { text-align: left; font-weight: 600; color: var(--text-muted); }
 
-    /* Cell Types */
-    td.actual { background: rgba(56, 189, 248, 0.1); color: var(--accent-blue); cursor: pointer; }
-    td.actual:hover { background: rgba(56, 189, 248, 0.25); }
-    td.outlier { text-decoration: line-through; opacity: 0.4; background: rgba(248, 113, 113, 0.1); color: var(--accent-red); }
-    td.forecast { background: rgba(192, 132, 252, 0.08); color: var(--accent-purple); font-style: italic; }
-    td.empty { background: transparent; }
-
-    /* Stats Panel */
-    .stat-box {
-      margin-bottom: 1.25rem;
-      background: rgba(0,0,0,0.2);
-      padding: 1rem;
-      border-radius: 8px;
-      border-left: 4px solid var(--accent-blue);
-    }
-    .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .stat-val { font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem; }
-
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
+    th { background: rgba(0,0,0,0.4); color: var(--text-muted); font-weight: 600; }
+    
+    /* Explicit LDF Column Headers */
+    .ldf-header {
+      background: rgba(192, 132, 252, 0.15);
+      color: var(--accent-purple);
+      font-weight: 700;
       font-size: 0.8rem;
-      font-weight: 600;
-      margin-top: 0.5rem;
+      border: 1px dashed rgba(192, 132, 252, 0.4);
     }
-    .status-safe { background: rgba(52, 211, 153, 0.2); color: var(--accent-green); }
-    .status-warn { background: rgba(248, 113, 113, 0.2); color: var(--accent-red); }
 
-    /* Explainer Box */
-    .explainer {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-      background: rgba(255,255,255,0.03);
-      padding: 0.8rem;
-      border-radius: 8px;
-      border: 1px dashed var(--border);
+    td.actual { background: rgba(56, 189, 248, 0.12); color: var(--accent-cyan); font-weight: 600; }
+    td.highlight { background: rgba(56, 189, 248, 0.4) !important; color: #fff; font-weight: 700; animation: pulse 0.6s ease; }
+    td.forecast { background: rgba(192, 132, 252, 0.1); color: var(--accent-purple); font-style: italic; }
+    td.ldf-cell { background: rgba(192, 132, 252, 0.05); color: var(--accent-purple); font-weight: 700; }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
     }
-    .explainer strong { color: var(--text); }
+
+    /* Math Cards for Data Scientists */
+    .formula-box {
+      background: rgba(0,0,0,0.3);
+      border-left: 3px solid var(--accent-purple);
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    .formula-title { color: var(--accent-purple); font-weight: 700; margin-bottom: 0.2rem; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>🛡️ Actuary Roulette: The Claims Tail Sandbox</h1>
-    <p class="subtitle">Why insurance companies go broke predicting the future using historical claims data.</p>
+    <div>
+      <h1>Loss Triangle 📐</h1>
+      <p class="subtitle">How real-world events develop into actuarial forecasts & link ratios (LDFs).</p>
+    </div>
   </header>
 
-  <div class="dashboard-grid">
+  <div class="card">
+    <div class="story-header">🚗 Interactive Event Simulator (Accident Year 2024)</div>
     
-    <div class="card">
-      <div class="card-title">
-        <span>Claims Loss Triangle ($ Thousands)</span>
-        <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">💡 Click blue cells to strike out outliers</span>
+    <div class="pipeline-container">
+      <div id="step-0" class="pipeline-step active">
+        <div class="step-icon">💥🌳</div>
+        <div class="step-title">1. Tree Collision</div>
+        <div class="step-cost">$1,200</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem;">Initial Tow & Claim Reserve</div>
       </div>
 
-      <div class="controls">
-        <button id="btn-auto" class="active" onclick="switchLOB('auto')">🚗 Auto Insurance (Short Tail)</button>
-        <button id="btn-cyber" onclick="switchLOB('cyber')">💻 Cyber Liability (Long Tail)</button>
-        <button class="chaos-btn" onclick="applyChaos('socialInflation')">⚖️ Trigger Litigation Spike (+30%)</button>
-        <button onclick="resetData()">🔄 Reset Matrix</button>
+      <div id="step-1" class="pipeline-step">
+        <div class="step-icon">🛠️🚘</div>
+        <div class="step-title">2. Engine & Body Repair</div>
+        <div class="step-cost">+$2,400</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem;">Cumulative: $3,600</div>
       </div>
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th class="first-col">Accident Year</th>
-              <th>Year 1 (0-12m)</th>
-              <th>Year 2 (12-24m)</th>
-              <th>Year 3 (24-36m)</th>
-              <th>Year 4 (36-48m)</th>
-            </tr>
-          </thead>
-          <tbody id="triangle-body">
-            </tbody>
-        </table>
+      <div id="step-2" class="pipeline-step">
+        <div class="step-icon">🎨🚿</div>
+        <div class="step-title">3. Paint & Diagnostics</div>
+        <div class="step-cost">+$720</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem;">Cumulative: $4,320</div>
       </div>
 
-      <div style="margin-top: 1rem; display: flex; gap: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
-        <span style="display: flex; align-items: center; gap: 0.4rem;">
-          <span style="width: 10px; height: 10px; background: rgba(56, 189, 248, 0.4); border-radius: 2px;"></span> Paid Claims (Historical)
-        </span>
-        <span style="display: flex; align-items: center; gap: 0.4rem;">
-          <span style="width: 10px; height: 10px; background: rgba(192, 132, 252, 0.4); border-radius: 2px;"></span> Actuarial Forecast (Future)
-        </span>
+      <div id="step-3" class="pipeline-step">
+        <div class="step-icon">🔑✅</div>
+        <div class="step-title">4. Car Returned / Closed</div>
+        <div class="step-cost">+$216</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.3rem;">Final Settlement: $4,536</div>
       </div>
     </div>
 
-    <div>
-      <div class="card">
-        <div class="card-title">Corporate Solvency Gauge</div>
-        
-        <div class="stat-box">
-          <div class="stat-label">Required Future Cash Reserves</div>
-          <div class="stat-val" id="stat-reserves" style="color: var(--accent-purple);">$0</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Cash that MUST be held today to pay future claims.</div>
-        </div>
+    <div class="story-controls">
+      <button class="primary" onclick="advanceClaimStory()">▶️ Step Claim Forward</button>
+      <button onclick="resetStory()">🔄 Reset Claim Journey</button>
+      <span id="story-status" style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">
+        Current Dev Year: <strong>1 (0-12m)</strong>
+      </span>
+    </div>
+  </div>
 
-        <div class="stat-box" style="border-left-color: var(--accent-green);">
-          <div class="stat-label">Capital Surplus (Bank Account)</div>
-          <div class="stat-val" style="color: var(--accent-green);">$2,500k</div>
-          <div id="solvency-badge" class="status-badge status-safe">SOLVENT: Adequate Reserves</div>
-        </div>
+  <div class="triangle-grid">
+    
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <span style="font-weight: 600; color: var(--accent-cyan); font-size: 0.95rem;">Cumulative Paid Losses Matrix</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">* Purple cells are Chain Ladder projections</span>
+      </div>
 
-        <div class="explainer">
-          <strong>How to read this in 10 seconds:</strong><br>
-          • <strong>Accident Year:</strong> The year injuries or crashes happened.<br>
-          • <strong>Development Years:</strong> How long it takes claims to settle. Auto claims settle fast. Cyber claims take years as lawyers argue!<br>
-          • <strong>The Purple Cells:</strong> The blank future cells are calculated automatically using the growth rate (LDF) of historical years.
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left;">Accident Year</th>
+              <th>Dev 1<br>(0-12m)</th>
+              <th class="ldf-header">LDF 1→2</th>
+              <th>Dev 2<br>(12-24m)</th>
+              <th class="ldf-header">LDF 2→3</th>
+              <th>Dev 3<br>(24-36m)</th>
+              <th class="ldf-header">LDF 3→4</th>
+              <th>Dev 4<br>(36-48m)</th>
+            </tr>
+          </thead>
+          <tbody id="triangle-tbody">
+            </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight: 600; color: var(--accent-purple); font-size: 0.95rem; margin-bottom: 0.75rem;">
+        🧠 Data Science & Math Corner
+      </div>
+
+      <div class="formula-box">
+        <div class="formula-title">Loss Development Factor (LDF)</div>
+        <code>LDF<sub>j</sub> = Σ Cumulative Cost<sub>j+1</sub> / Σ Cumulative Cost<sub>j</sub></code>
+        <div style="margin-top: 0.4rem; color: var(--text-muted);">
+          Measures the average multiplier factor as historical claims age from stage to stage.
+        </div>
+      </div>
+
+      <div class="formula-box" style="border-left-color: var(--accent-cyan);">
+        <div class="formula-title" style="color: var(--accent-cyan);">The Chain Ladder Method</div>
+        <code>Future Estimate = Current Cumulative Cost × LDF<sub>j</sub></code>
+        <div style="margin-top: 0.4rem; color: var(--text-muted);">
+          Actuaries project the blank bottom-right triangle cells by chaining historical LDF factors.
         </div>
       </div>
     </div>
@@ -217,166 +276,129 @@
   </div>
 
   <script>
-    // Base Datasets (Cumulative Paid Losses in $ Thousands)
-    const datasets = {
-      auto: [
-        [1000, 1500, 1700, 1750], // 2021
-        [1100, 1650, 1870, null], // 2022
-        [1050, 1575, null, null], // 2023
-        [1200, null, null, null]  // 2024
-      ],
-      cyber: [
-        [300,  800,  1800, 3200], // 2021 (Long tail explode!)
-        [350,  950,  2100, null], // 2022
-        [320,  900,  null, null], // 2023
-        [400,  null, null, null]  // 2024
-      ]
-    };
+    // Story cumulative amounts for AY 2024
+    const storyValues = [1200, 3600, 4320, 4536];
+    let currentStep = 0;
 
-    let currentLOB = 'auto';
-    let rawData = JSON.parse(JSON.stringify(datasets.auto));
-    let struckCells = new Set(); // Stores "row-col" strings of ignored outliers
+    // Historical Base Triangle (Cumulative $ Thousands)
+    const baseData = [
+      [1000, 3000, 3600, 3780], // AY 2021
+      [1100, 3300, 3960, null], // AY 2022
+      [1050, 3150, null, null], // AY 2023
+      [1200, null, null, null]  // AY 2024 (Active Story Year)
+    ];
 
-    function switchLOB(lob) {
-      currentLOB = lob;
-      document.getElementById('btn-auto').classList.toggle('active', lob === 'auto');
-      document.getElementById('btn-cyber').classList.toggle('active', lob === 'cyber');
-      resetData();
-    }
-
-    function resetData() {
-      rawData = JSON.parse(JSON.stringify(datasets[currentLOB]));
-      struckCells.clear();
-      recalculateTriangle();
-    }
-
-    function toggleCellStrike(r, c) {
-      const key = `${r}-${c}`;
-      if (struckCells.has(key)) {
-        struckCells.delete(key);
-      } else {
-        struckCells.add(key);
-      }
-      recalculateTriangle();
-    }
-
-    function applyChaos(type) {
-      if (type === 'socialInflation') {
-        // Boost latest dev factors / values by +30%
-        for(let r=0; r<4; r++) {
-          for(let c=0; c<4; c++) {
-            if (rawData[r][c] !== null && c > 0) {
-              rawData[r][c] = Math.round(rawData[r][c] * 1.3);
-            }
-          }
-        }
-      }
-      recalculateTriangle();
-    }
-
-    function calculateLDFs(data) {
-      // Calculate Loss Development Factors (Link Ratios)
+    function calculateLDFs(matrix) {
       let ldfs = [];
       for (let c = 0; c < 3; c++) {
-        let sumPrior = 0;
+        let sumCurrent = 0;
         let sumNext = 0;
         for (let r = 0; r < 3 - c; r++) {
-          if (!struckCells.has(`${r}-${c}`) && !struckCells.has(`${r}-${c+1}`)) {
-            if (data[r][c] !== null && data[r][c+1] !== null) {
-              sumPrior += data[r][c];
-              sumNext += data[r][c+1];
-            }
+          if (matrix[r][c] !== null && matrix[r][c+1] !== null) {
+            sumCurrent += matrix[r][c];
+            sumNext += matrix[r][c+1];
           }
         }
-        // Fallback LDF if all struck out
-        ldfs.push(sumPrior > 0 ? sumNext / sumPrior : 1.1);
+        ldfs.push(sumCurrent > 0 ? (sumNext / sumCurrent) : 1.0);
       }
       return ldfs;
     }
 
-    function recalculateTriangle() {
-      const ldfs = calculateLDFs(rawData);
-      let grid = JSON.parse(JSON.stringify(rawData));
-      let totalReserve = 0;
+    function renderTriangle() {
+      // Build matrix state
+      let matrix = JSON.parse(JSON.stringify(baseData));
+      
+      // Update AY 2024 (row 3) up to the current story step
+      for (let i = 0; i <= currentStep; i++) {
+        matrix[3][i] = storyValues[i];
+      }
 
-      // Project missing future cells using Chain Ladder Math
+      // Compute weighted LDFs based on visible cells
+      const ldfs = calculateLDFs(matrix);
+
+      // Forecast missing cells using computed LDFs
       for (let r = 0; r < 4; r++) {
         for (let c = 0; c < 4; c++) {
-          if (grid[r][c] === null) {
-            const prevVal = grid[r][c - 1];
-            const factor = ldfs[c - 1];
-            grid[r][c] = Math.round(prevVal * factor);
-            
-            // If this is the final year column (dev year 4), add the unpaid gap to required reserves
-            if (c === 3) {
-              const latestActual = rawData[r].filter(v => v !== null).pop();
-              totalReserve += (grid[r][3] - latestActual);
-            }
+          if (matrix[r][c] === null) {
+            const prev = matrix[r][c-1];
+            const factor = ldfs[c-1];
+            matrix[r][c] = Math.round(prev * factor);
           }
         }
       }
 
-      renderTable(grid);
-      updateSolvency(totalReserve);
-    }
-
-    function renderTable(grid) {
-      const tbody = document.getElementById('triangle-body');
+      // Render Table
+      const tbody = document.getElementById('triangle-tbody');
       tbody.innerHTML = '';
-
       const years = ['2021', '2022', '2023', '2024'];
 
       for (let r = 0; r < 4; r++) {
         const tr = document.createElement('tr');
         
-        // Row Header
+        // AY Label
         const th = document.createElement('td');
-        th.className = 'first-col';
+        th.style.textAlign = 'left';
+        th.style.fontWeight = '600';
+        th.style.color = 'var(--text-muted)';
         th.innerText = `AY ${years[r]}`;
         tr.appendChild(th);
 
         for (let c = 0; c < 4; c++) {
+          // Data Cell
           const td = document.createElement('td');
-          const isActual = rawData[r][c] !== null;
-          const isStruck = struckCells.has(`${r}-${c}`);
-          
+          const isActual = (r + c < 4) && !(r === 3 && c > currentStep);
+
           if (isActual) {
-            td.className = isStruck ? 'actual outlier' : 'actual';
-            td.innerText = `$${grid[r][c]}`;
-            td.title = "Click to strike out as outlier";
-            td.onclick = () => toggleCellStrike(r, c);
+            td.className = (r === 3 && c === currentStep) ? 'actual highlight' : 'actual';
+            td.innerText = `$${matrix[r][c].toLocaleString()}`;
           } else {
             td.className = 'forecast';
-            td.innerText = `$${grid[r][c]}*`;
-            td.title = "Actuarial Projected Reserve";
+            td.innerText = `$${matrix[r][c].toLocaleString()}*`;
           }
           tr.appendChild(td);
+
+          // Insert LDF Column between Dev columns
+          if (c < 3) {
+            const ldfTd = document.createElement('td');
+            ldfTd.className = 'ldf-cell';
+            ldfTd.innerText = `${ldfs[c].toFixed(2)}x`;
+            tr.appendChild(ldfTd);
+          }
         }
         tbody.appendChild(tr);
       }
     }
 
-    function updateSolvency(requiredReserves) {
-      const reservesElem = document.getElementById('stat-reserves');
-      const badgeElem = document.getElementById('solvency-badge');
-      
-      reservesElem.innerText = `$${requiredReserves.toLocaleString()}k`;
-
-      const availableCapital = 2500; // $2.5M fixed capital baseline
-      
-      if (requiredReserves > availableCapital) {
-        badgeElem.innerText = "🚨 INSOLVENT: Reserves Exceed Capital!";
-        badgeElem.className = "status-badge status-warn";
-        reservesElem.style.color = "var(--accent-red)";
-      } else {
-        badgeElem.innerText = "SOLVENT: Adequate Reserves";
-        badgeElem.className = "status-badge status-safe";
-        reservesElem.style.color = "var(--accent-purple)";
+    function advanceClaimStory() {
+      if (currentStep < 3) {
+        currentStep++;
+        updatePipelineUI();
+        renderTriangle();
       }
     }
 
-    // Initial Launch
-    recalculateTriangle();
+    function resetStory() {
+      currentStep = 0;
+      updatePipelineUI();
+      renderTriangle();
+    }
+
+    function updatePipelineUI() {
+      for (let i = 0; i < 4; i++) {
+        const stepElem = document.getElementById(`step-${i}`);
+        stepElem.classList.remove('active', 'completed');
+        if (i === currentStep) {
+          stepElem.classList.add('active');
+        } else if (i < currentStep) {
+          stepElem.classList.add('completed');
+        }
+      }
+      document.getElementById('story-status').innerHTML = 
+        `Current Dev Year: <strong>${currentStep + 1} (Dev Year ${currentStep + 1})</strong>`;
+    }
+
+    // Initial Load
+    renderTriangle();
   </script>
 </body>
 </html>
