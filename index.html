@@ -3,35 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Loss Triangle | Zombie Risk Simulator</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <title>Reinsurance Risk Tower // Dynamic Drag Engine</title>
   <style>
     :root {
-      --bg: #070a12;
-      --card: rgba(16, 23, 42, 0.85);
-      --border: rgba(57, 255, 20, 0.2);
-      --green: #39ff14; /* Toxic Green */
-      --cyan: #00f3ff;  /* Bio Cyan */
-      --magenta: #ff0055; /* Outbreak Red */
-      --amber: #ffaa00; /* Hazard Amber */
-      --purple: #bf00ff; /* Mutation Purple */
-      --text: #f1f5f9;
+      --bg: #05070a;
+      --card-bg: rgba(13, 16, 23, 0.75);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-bright: rgba(255, 255, 255, 0.2);
+      --text: #f8fafc;
       --text-muted: #64748b;
+      --font-mono: 'JetBrains Mono', Consolas, monospace;
+
+      --color-l1: #f59e0b;
+      --color-l2: #10b981;
+      --color-l3: #06b6d4;
+      --color-l4: #a855f7;
+
+      --zoom-scale: 1;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      padding: 1.5rem;
       min-height: 100vh;
+      padding: 1.5rem;
       display: flex;
       flex-direction: column;
       gap: 1.25rem;
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(57, 255, 20, 0.03) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(255, 0, 85, 0.03) 0%, transparent 40%);
+      background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.05), transparent 70%);
+      overflow-x: hidden;
     }
 
     header {
@@ -42,225 +44,709 @@
       padding-bottom: 1rem;
     }
 
-    .title-group h1 {
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #fff 30%, var(--green));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand-icon { width: 14px; height: 14px; background: var(--color-l3); border-radius: 50%; box-shadow: 0 0 12px var(--color-l3); }
+    h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+    .tag { font-size: 0.68rem; font-family: var(--font-mono); color: var(--color-l3); background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.25); padding: 0.2rem 0.5rem; border-radius: 4px; }
 
-    .subtitle { color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem; }
+    .header-actions { display: flex; align-items: center; gap: 1rem; }
 
-    /* Top Grid: Animation & Solvency */
-    .top-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 1.25rem;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.25rem;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      position: relative;
-    }
-
-    .card-header {
+    .mode-switch {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: var(--cyan);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    /* Animation Canvas & Controls */
-    #outbreak-canvas {
-      width: 100%;
-      height: 160px;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 10px;
-      border: 1px dashed rgba(255, 255, 255, 0.1);
-    }
-
-    .story-controls {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-      margin-top: 1rem;
-    }
-
-    button {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.65rem 1.25rem;
       border-radius: 8px;
-      font-weight: 700;
+      padding: 2px;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      background: var(--color-l3);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .scale-controls {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.6rem;
+      border-radius: 8px;
     }
 
-    button:hover {
-      background: rgba(57, 255, 20, 0.15);
-      border-color: var(--green);
-      color: var(--green);
-      transform: translateY(-2px);
-    }
+    .scale-label { font-size: 0.68rem; font-family: var(--font-mono); color: var(--text-muted); }
+    .scale-val { font-size: 0.75rem; font-family: var(--font-mono); font-weight: 700; color: var(--color-l3); min-width: 40px; text-align: center; }
 
-    button.btn-primary {
-      background: var(--green);
-      color: #000;
-      border-color: var(--green);
-      box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
-    }
-
-    button.btn-primary:hover {
-      background: #50ff30;
-      box-shadow: 0 0 25px rgba(57, 255, 20, 0.7);
-      color: #000;
-    }
-
-    button.btn-hazard {
-      border-color: var(--magenta);
-      color: var(--magenta);
-    }
-    button.btn-hazard:hover {
-      background: rgba(255, 0, 85, 0.2);
-    }
-
-    /* Solvency Gauge HUD */
-    .hud-stat {
-      text-align: center;
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 10px;
-      border-left: 4px solid var(--green);
-      margin-bottom: 0.75rem;
-    }
-
-    .hud-val {
-      font-size: 1.8rem;
-      font-weight: 800;
-      margin-top: 0.2rem;
-      font-family: monospace;
-    }
-
-    .status-pill {
-      display: inline-block;
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      margin-top: 0.5rem;
-    }
-
-    .pill-safe { background: rgba(57, 255, 20, 0.2); color: var(--green); border: 1px solid var(--green); }
-    .pill-danger { background: rgba(255, 0, 85, 0.2); color: var(--magenta); border: 1px solid var(--magenta); animation: blink 1s infinite; }
-
-    @keyframes blink { 50% { opacity: 0.5; } }
-
-    /* Bottom Grid: Triangle & Math */
-    .bottom-grid {
-      display: grid;
-      grid-template-columns: 2.2fr 1fr;
-      gap: 1.25rem;
-    }
-
-    .table-container { overflow-x: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 4px;
-    }
-
-    th, td {
-      padding: 0.65rem;
-      text-align: center;
-      font-size: 0.85rem;
-      border-radius: 6px;
-      font-family: monospace;
-      position: relative;
-    }
-
-    th { background: rgba(0, 0, 0, 0.5); color: var(--text-muted); font-weight: 700; }
-    
-    th.ldf-col-header {
-      background: rgba(191, 0, 255, 0.15);
-      color: var(--purple);
-      border: 1px dashed rgba(191, 0, 255, 0.4);
-    }
-
-    td.cell-actual {
-      background: rgba(0, 243, 255, 0.1);
-      color: var(--cyan);
-      border: 1px solid rgba(0, 243, 255, 0.2);
+    .scale-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
       cursor: pointer;
-      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
     }
 
-    td.cell-actual:hover {
-      background: rgba(0, 243, 255, 0.25);
-      border-color: var(--cyan);
+    .dashboard-wrapper {
+      transform-origin: top left;
+      transform: scale(var(--zoom-scale));
+      width: calc(100% / var(--zoom-scale));
+      transition: transform 0.15s ease-out;
     }
 
-    td.cell-outlier {
-      text-decoration: line-through;
-      opacity: 0.35;
-      background: rgba(255, 0, 85, 0.15);
-      color: var(--magenta);
-      border-color: var(--magenta);
+    /* DEFAULT: Equal 50/50 split between Waterfall and Controls */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 12px 1fr;
+      gap: 0;
     }
 
-    td.cell-forecast {
-      background: rgba(191, 0, 255, 0.1);
-      color: var(--purple);
-      border: 1px dashed rgba(191, 0, 255, 0.3);
-      font-style: italic;
+    .resizer {
+      width: 12px;
+      cursor: col-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
     }
 
-    td.cell-ldf {
-      background: rgba(191, 0, 255, 0.05);
-      color: var(--purple);
-      font-weight: 800;
-      cursor: help;
+    .resizer::before {
+      content: '';
+      width: 4px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+      transition: background 0.2s, height 0.2s;
     }
 
-    td.cell-ldf:hover {
-      background: rgba(191, 0, 255, 0.25);
-      box-shadow: 0 0 10px rgba(191, 0, 255, 0.5);
+    .resizer:hover::before, .resizer.dragging::before {
+      background: var(--color-l3);
+      box-shadow: 0 0 8px var(--color-l3);
+      height: 60px;
     }
 
-    /* Math Tooltip Card */
-    .math-card {
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card-title {
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .tower-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
       background: rgba(0, 0, 0, 0.6);
-      border-left: 3px solid var(--purple);
-      padding: 0.8rem;
-      border-radius: 6px;
-      margin-bottom: 0.8rem;
-      font-size: 0.8rem;
-      line-height: 1.4;
+      padding: 0.85rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      flex: 1;
     }
 
-    .math-title { color: var(--purple); font-weight: 700; margin-bottom: 0.3rem; }
-
-    /* Responsive */
-    @media (max-width: 900px) {
-      .top-grid, .bottom-grid { grid-template-columns: 1fr; }
+    .tower-layer {
+      position: relative;
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      padding: 0.6rem 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: height 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      min-height: 60px;
     }
-  </style
+
+    .tower-layer.active-l1 { border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+    .tower-layer.active-l2 { border-color: rgba(16, 185, 129, 0.5); box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
+    .tower-layer.active-l3 { border-color: rgba(6, 182, 212, 0.5); box-shadow: 0 0 20px rgba(6, 182, 212, 0.15); }
+    .tower-layer.active-l4 { border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 20px rgba(168, 85, 247, 0.15); }
+
+    .layer-resizer {
+      height: 12px;
+      margin: -6px 0;
+      position: relative;
+      z-index: 20;
+      cursor: ns-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .layer-resizer::after {
+      content: '';
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.12);
+      transition: background 0.2s, height 0.2s;
+    }
+
+    .layer-resizer:hover::after, .layer-resizer.dragging::after {
+      background: var(--color-l3);
+      height: 4px;
+      box-shadow: 0 0 8px var(--color-l3);
+    }
+
+    .layer-resizer-badge {
+      position: absolute;
+      background: var(--bg);
+      border: 1px solid var(--border-bright);
+      color: var(--color-l3);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 10px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .layer-resizer:hover .layer-resizer-badge, .layer-resizer.dragging .layer-resizer-badge {
+      opacity: 1;
+    }
+
+    .liquid-wrapper {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 0%;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .liquid-body { width: 100%; height: 100%; background-color: var(--layer-color); opacity: 0.4; }
+
+    .wave {
+      position: absolute;
+      left: 0;
+      width: 200%;
+      background-color: var(--layer-color);
+      -webkit-mask-repeat: repeat-x;
+      mask-repeat: repeat-x;
+      -webkit-mask-size: 50% 100%;
+      mask-size: 50% 100%;
+    }
+
+    .wave.front {
+      top: -18px; height: 22px; opacity: 0.95;
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 100' preserveAspectRatio='none'%3E%3Cpath d='M 0 40 Q 200 90, 400 40 T 800 40 L 800 100 L 0 100 Z' fill='%23000000'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 100' preserveAspectRatio='none'%3E%3Cpath d='M 0 40 Q 200 90, 400 40 T 800 40 L 800 100 L 0 100 Z' fill='%23000000'/%3E%3C/svg%3E");
+      animation: wave-front-anim 1.6s linear infinite; z-index: 2;
+    }
+
+    .wave.back {
+      top: -24px; height: 28px; opacity: 0.5;
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 100' preserveAspectRatio='none'%3E%3Cpath d='M 0 50 Q 200 10, 400 50 T 800 50 L 800 100 L 0 100 Z' fill='%23000000'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 100' preserveAspectRatio='none'%3E%3Cpath d='M 0 50 Q 200 10, 400 50 T 800 50 L 800 100 L 0 100 Z' fill='%23000000'/%3E%3C/svg%3E");
+      animation: wave-back-anim 2.4s linear infinite; z-index: 1;
+    }
+
+    @keyframes wave-front-anim { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes wave-back-anim { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+    .layer-header, .layer-stats { position: relative; z-index: 3; }
+    .layer-header { display: flex; justify-content: space-between; align-items: center; }
+    .layer-title { font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .layer-range { font-size: 0.7rem; font-family: var(--font-mono); color: var(--text-muted); }
+    .layer-stats { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 0.2rem; }
+    .layer-paid { font-size: 1.15rem; font-family: var(--font-mono); font-weight: 800; }
+
+    .layer-badge {
+      font-size: 0.65rem; font-family: var(--font-mono); padding: 0.2rem 0.5rem; border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--border);
+    }
+
+    .slider-box {
+      background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+
+    .claim-header { display: flex; justify-content: space-between; align-items: center; }
+    .claim-amount { font-size: 2.2rem; font-family: var(--font-mono); font-weight: 800; }
+
+    .exact-input-wrap {
+      display: flex; align-items: center; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 6px; padding: 0.2rem 0.5rem;
+    }
+
+    .exact-input-wrap span { font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted); }
+    .exact-input { background: transparent; border: none; color: var(--color-l3); font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; width: 60px; text-align: right; outline: none; }
+
+    input[type="range"] { width: 100%; height: 6px; accent-color: var(--color-l3); background: rgba(255, 255, 255, 0.1); border-radius: 3px; cursor: pointer; }
+
+    .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+
+    button.preset-btn {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); color: var(--text); padding: 0.6rem; border-radius: 8px; font-size: 0.72rem; font-weight: 600; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 0.15rem;
+    }
+
+    button.preset-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--border-bright); }
+    button.preset-btn span.val { font-family: var(--font-mono); color: var(--color-l3); }
+
+    .summary-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+    .summary-card { background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+    .summary-label { font-size: 0.68rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase; }
+    .summary-val { font-size: 1.1rem; font-family: var(--font-mono); font-weight: 800; }
+    .summary-pct { font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted); text-align: right; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon"></div>
+      <h1>Reinsurance Risk Tower</h1>
+      <span class="tag">Excess of Loss Engine</span>
+    </div>
+
+    <div class="header-actions">
+      <div class="mode-switch">
+        <button class="mode-btn" id="btn-mode-equal" onclick="setHeightMode('equal')">Equal Height</button>
+        <button class="mode-btn active" id="btn-mode-prop" onclick="setHeightMode('proportional')">To Scale</button>
+      </div>
+
+      <div class="scale-controls">
+        <span class="scale-label">ZOOM:</span>
+        <button class="scale-btn" onclick="changeScale(-0.1)">-</button>
+        <span class="scale-val" id="scale-display">100%</span>
+        <button class="scale-btn" onclick="changeScale(0.1)">+</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="dashboard-wrapper">
+    <div class="dashboard" id="dashboard">
+      
+      <div class="card" id="tower-panel">
+        <div class="card-title">
+          <span>Layering Structure</span>
+          <span style="color: var(--color-l3);" id="scale-indicator">Drag boundaries to adjust limits</span>
+        </div>
+
+        <div class="tower-container" id="tower-container">
+          
+          <div class="tower-layer" id="layer-4">
+            <div class="liquid-wrapper" id="fill-4" style="--layer-color: var(--color-l4);">
+              <div class="wave back"></div>
+              <div class="wave front"></div>
+              <div class="liquid-body"></div>
+            </div>
+            <div class="layer-header">
+              <div class="layer-title"><span class="dot" style="background: var(--color-l4); box-shadow: 0 0 8px var(--color-l4);"></span> Catastrophe Reinsurance</div>
+              <div class="layer-range" id="range-4">---</div>
+            </div>
+            <div class="layer-stats">
+              <div>
+                <div style="font-size: 0.62rem; color: var(--text-muted); font-family: var(--font-mono);">ABSORBED LOSS</div>
+                <div class="layer-paid" id="paid-4" style="color: var(--color-l4);">$0.0M</div>
+              </div>
+              <span class="layer-badge" id="status-4">0% Attached</span>
+            </div>
+          </div>
+
+          <div class="layer-resizer" id="resizer-3">
+            <div class="layer-resizer-badge" id="resizer-badge-3">$50.0M</div>
+          </div>
+
+          <div class="tower-layer" id="layer-3">
+            <div class="liquid-wrapper" id="fill-3" style="--layer-color: var(--color-l3);">
+              <div class="wave back"></div>
+              <div class="wave front"></div>
+              <div class="liquid-body"></div>
+            </div>
+            <div class="layer-header">
+              <div class="layer-title"><span class="dot" style="background: var(--color-l3); box-shadow: 0 0 8px var(--color-l3);"></span> Working Reinsurance</div>
+              <div class="layer-range" id="range-3">---</div>
+            </div>
+            <div class="layer-stats">
+              <div>
+                <div style="font-size: 0.62rem; color: var(--text-muted); font-family: var(--font-mono);">ABSORBED LOSS</div>
+                <div class="layer-paid" id="paid-3" style="color: var(--color-l3);">$0.0M</div>
+              </div>
+              <span class="layer-badge" id="status-3">0% Attached</span>
+            </div>
+          </div>
+
+          <div class="layer-resizer" id="resizer-2">
+            <div class="layer-resizer-badge" id="resizer-badge-2">$10.0M</div>
+          </div>
+
+          <div class="tower-layer" id="layer-2">
+            <div class="liquid-wrapper" id="fill-2" style="--layer-color: var(--color-l2);">
+              <div class="wave back"></div>
+              <div class="wave front"></div>
+              <div class="liquid-body"></div>
+            </div>
+            <div class="layer-header">
+              <div class="layer-title"><span class="dot" style="background: var(--color-l2); box-shadow: 0 0 8px var(--color-l2);"></span> Primary Insurer Retention</div>
+              <div class="layer-range" id="range-2">---</div>
+            </div>
+            <div class="layer-stats">
+              <div>
+                <div style="font-size: 0.62rem; color: var(--text-muted); font-family: var(--font-mono);">ABSORBED LOSS</div>
+                <div class="layer-paid" id="paid-2" style="color: var(--color-l2);">$0.0M</div>
+              </div>
+              <span class="layer-badge" id="status-2">0% Attached</span>
+            </div>
+          </div>
+
+          <div class="layer-resizer" id="resizer-1">
+            <div class="layer-resizer-badge" id="resizer-badge-1">$1.0M</div>
+          </div>
+
+          <div class="tower-layer" id="layer-1">
+            <div class="liquid-wrapper" id="fill-1" style="--layer-color: var(--color-l1);">
+              <div class="wave back"></div>
+              <div class="wave front"></div>
+              <div class="liquid-body"></div>
+            </div>
+            <div class="layer-header">
+              <div class="layer-title"><span class="dot" style="background: var(--color-l1); box-shadow: 0 0 8px var(--color-l1);"></span> Policyholder Deductible</div>
+              <div class="layer-range" id="range-1">---</div>
+            </div>
+            <div class="layer-stats">
+              <div>
+                <div style="font-size: 0.62rem; color: var(--text-muted); font-family: var(--font-mono);">ABSORBED LOSS</div>
+                <div class="layer-paid" id="paid-1" style="color: var(--color-l1);">$0.0M</div>
+              </div>
+              <span class="layer-badge" id="status-1">0% Attached</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="resizer" id="resizer"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;" id="controls-panel">
+        
+        <div class="card">
+          <div class="card-title">Catastrophe Loss Controls</div>
+
+          <div class="slider-box">
+            <div>
+              <div style="font-size: 0.68rem; font-family: var(--font-mono); color: var(--text-muted);">TOTAL INCURRED CLAIM LOSS</div>
+              <div class="claim-header">
+                <div class="claim-amount" id="claim-val">$35.0M</div>
+                <div class="exact-input-wrap">
+                  <span>$</span>
+                  <input type="number" id="exact-num" class="exact-input" min="0" max="100" step="0.5" value="35.0">
+                  <span>M</span>
+                </div>
+              </div>
+            </div>
+
+            <input type="range" id="loss-slider" min="0" max="100" value="35" step="0.5">
+
+            <div style="font-size: 0.68rem; font-family: var(--font-mono); color: var(--text-muted);">PRESET EVENT SHOCKS:</div>
+
+            <div class="preset-grid">
+              <button class="preset-btn" onclick="setLoss(0.8)">
+                <span>🌩️ Hailstorm</span>
+                <span class="val">$0.8M</span>
+              </button>
+              <button class="preset-btn" onclick="setLoss(6.5)">
+                <span>🔥 Commercial Fire</span>
+                <span class="val">$6.5M</span>
+              </button>
+              <button class="preset-btn" onclick="setLoss(35.0)">
+                <span>🌀 Cat 4 Hurricane</span>
+                <span class="val">$35.0M</span>
+              </button>
+              <button class="preset-btn" onclick="setLoss(85.0)">
+                <span>🌋 Regional Quake</span>
+                <span class="val">$85.0M</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Capital Exposure Distribution</div>
+
+          <div class="summary-grid">
+            <div class="summary-card" style="border-left: 3px solid var(--color-l1);">
+              <div>
+                <div class="summary-label">Insured</div>
+                <div class="summary-val" id="sum-insured-val" style="color: var(--color-l1);">$1.0M</div>
+              </div>
+              <div class="summary-pct" id="sum-insured-pct">2.9%</div>
+            </div>
+
+            <div class="summary-card" style="border-left: 3px solid var(--color-l2);">
+              <div>
+                <div class="summary-label">Primary Insurer</div>
+                <div class="summary-val" id="sum-primary-val" style="color: var(--color-l2);">$9.0M</div>
+              </div>
+              <div class="summary-pct" id="sum-primary-pct">25.7%</div>
+            </div>
+
+            <div class="summary-card" style="border-left: 3px solid var(--color-l3);">
+              <div>
+                <div class="summary-label">Reinsurers</div>
+                <div class="summary-val" id="sum-reinsurer-val" style="color: var(--color-l3);">$25.0M</div>
+              </div>
+              <div class="summary-pct" id="sum-reinsurer-pct">71.4%</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- Dynamic Layer Limit Endpoints ---
+    let limits = [0, 1, 10, 50, 100];
+
+    const layerDefs = [
+      { id: 1, name: 'Policyholder Deductible', cls: 'active-l1' },
+      { id: 2, name: 'Primary Insurer Retention', cls: 'active-l2' },
+      { id: 3, name: 'Working Reinsurance', cls: 'active-l3' },
+      { id: 4, name: 'Catastrophe Reinsurance', cls: 'active-l4' }
+    ];
+
+    // DEFAULT: Set heightMode to 'proportional' by default
+    let heightMode = 'proportional';
+
+    function updateHeightsAndLabels() {
+      layerDefs.forEach((l, idx) => {
+        const min = limits[idx];
+        const max = limits[idx + 1];
+        const limit = max - min;
+
+        document.getElementById(`range-${l.id}`).innerText = `$${min.toFixed(1)}M – $${max.toFixed(1)}M ($${limit.toFixed(1)}M Limit)`;
+
+        const el = document.getElementById(`layer-${l.id}`);
+        if (heightMode === 'proportional') {
+          const propH = Math.max(60, (limit / 100) * 420);
+          el.style.height = `${propH}px`;
+        } else {
+          el.style.height = '110px';
+        }
+      });
+
+      document.getElementById('resizer-badge-1').innerText = `$${limits[1].toFixed(1)}M`;
+      document.getElementById('resizer-badge-2').innerText = `$${limits[2].toFixed(1)}M`;
+      document.getElementById('resizer-badge-3').innerText = `$${limits[3].toFixed(1)}M`;
+    }
+
+    function setHeightMode(mode) {
+      heightMode = mode;
+      document.getElementById('btn-mode-equal').classList.toggle('active', mode === 'equal');
+      document.getElementById('btn-mode-prop').classList.toggle('active', mode === 'proportional');
+      document.getElementById('scale-indicator').innerText = mode === 'equal' ? 'Equal Layer Heights' : 'Proportional (To Scale)';
+      updateHeightsAndLabels();
+    }
+
+    // --- Interactive Layer Boundary Dragging ---
+    let activeLayerResizer = null;
+    let startY = 0;
+    let startLimitVal = 0;
+
+    [1, 2, 3].forEach(idx => {
+      const resizerEl = document.getElementById(`resizer-${idx}`);
+      
+      resizerEl.addEventListener('mousedown', (e) => {
+        activeLayerResizer = idx;
+        startY = e.clientY;
+        startLimitVal = limits[idx];
+        resizerEl.classList.add('dragging');
+        document.body.style.cursor = 'ns-resize';
+        document.body.style.userSelect = 'none';
+      });
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (activeLayerResizer === null) return;
+
+      const deltaY = (startY - e.clientY) / currentScale;
+      const stepSensitivity = 0.2;
+      
+      let newVal = Math.round((startLimitVal + deltaY * stepSensitivity) * 2) / 2;
+
+      const minBound = limits[activeLayerResizer - 1] + 0.5;
+      const maxBound = limits[activeLayerResizer + 1] - 0.5;
+
+      newVal = Math.max(minBound, Math.min(maxBound, newVal));
+      limits[activeLayerResizer] = newVal;
+
+      updateHeightsAndLabels();
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (activeLayerResizer !== null) {
+        document.getElementById(`resizer-${activeLayerResizer}`).classList.remove('dragging');
+        activeLayerResizer = null;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+
+    // --- Zoom Scale Control ---
+    let currentScale = 1.0;
+    function changeScale(delta) {
+      currentScale = Math.max(0.75, Math.min(1.4, currentScale + delta));
+      document.documentElement.style.setProperty('--zoom-scale', currentScale);
+      document.getElementById('scale-display').innerText = `${Math.round(currentScale * 100)}%`;
+    }
+
+    // --- Middle Panel Splitter ---
+    const resizer = document.getElementById('resizer');
+    const dashboard = document.getElementById('dashboard');
+    let isPanelDragging = false;
+
+    resizer.addEventListener('mousedown', () => {
+      isPanelDragging = true;
+      resizer.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isPanelDragging) return;
+      const rect = dashboard.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) / currentScale;
+      const totalWidth = rect.width / currentScale;
+      const leftWidth = Math.max(300, Math.min(totalWidth - 280, mouseX - 6));
+      const rightWidth = totalWidth - leftWidth - 12;
+      dashboard.style.gridTemplateColumns = `${leftWidth}px 12px ${rightWidth}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isPanelDragging) {
+        isPanelDragging = false;
+        resizer.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+
+    // --- Simulation Engine ---
+    const slider = document.getElementById('loss-slider');
+    const exactInput = document.getElementById('exact-num');
+    let targetLoss = parseFloat(slider.value);
+    let currentLoss = targetLoss;
+
+    function render() {
+      currentLoss += (targetLoss - currentLoss) * 0.18;
+      document.getElementById('claim-val').innerText = `$${currentLoss.toFixed(1)}M`;
+
+      let paidByLayer = {};
+
+      layerDefs.forEach((l, idx) => {
+        const min = limits[idx];
+        const max = limits[idx + 1];
+        const limit = max - min;
+
+        let paid = 0;
+        if (currentLoss > min) {
+          paid = Math.min(currentLoss - min, limit);
+        }
+        paidByLayer[l.id] = paid;
+
+        const fillPct = limit > 0 ? (paid / limit) * 100 : 0;
+        const fillEl = document.getElementById(`fill-${l.id}`);
+        fillEl.style.height = `${fillPct}%`;
+
+        const waves = fillEl.querySelectorAll('.wave');
+        waves.forEach(w => w.style.display = fillPct > 0 ? 'block' : 'none');
+
+        document.getElementById(`paid-${l.id}`).innerText = `$${paid.toFixed(1)}M`;
+
+        const badge = document.getElementById(`status-${l.id}`);
+        const card = document.getElementById(`layer-${l.id}`);
+
+        if (fillPct >= 100) {
+          badge.innerText = 'Exhausted';
+          badge.style.color = '#f43f5e';
+          card.className = `tower-layer ${l.cls}`;
+        } else if (fillPct > 0) {
+          badge.innerText = `${fillPct.toFixed(0)}% Attached`;
+          badge.style.color = 'var(--text)';
+          card.className = `tower-layer ${l.cls}`;
+        } else {
+          badge.innerText = '0% Attached';
+          badge.style.color = 'var(--text-muted)';
+          card.className = 'tower-layer';
+        }
+      });
+
+      const insured = paidByLayer[1];
+      const primary = paidByLayer[2];
+      const reinsurer = paidByLayer[3] + paidByLayer[4];
+      const safeTotal = currentLoss || 1;
+
+      document.getElementById('sum-insured-val').innerText = `$${insured.toFixed(1)}M`;
+      document.getElementById('sum-insured-pct').innerText = `${((insured / safeTotal) * 100).toFixed(1)}% of total`;
+
+      document.getElementById('sum-primary-val').innerText = `$${primary.toFixed(1)}M`;
+      document.getElementById('sum-primary-pct').innerText = `${((primary / safeTotal) * 100).toFixed(1)}% of total`;
+
+      document.getElementById('sum-reinsurer-val').innerText = `$${reinsurer.toFixed(1)}M`;
+      document.getElementById('sum-reinsurer-pct').innerText = `${((reinsurer / safeTotal) * 100).toFixed(1)}% of total`;
+
+      requestAnimationFrame(render);
+    }
+
+    slider.addEventListener('input', (e) => { 
+      targetLoss = parseFloat(e.target.value); 
+      exactInput.value = targetLoss.toFixed(1);
+    });
+
+    exactInput.addEventListener('input', (e) => {
+      let val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        val = Math.max(0, Math.min(100, val));
+        targetLoss = val;
+        slider.value = val;
+      }
+    });
+
+    function setLoss(val) {
+      slider.value = val;
+      exactInput.value = val;
+      targetLoss = val;
+    }
+
+    // Initialize in 'proportional' mode
+    setHeightMode('proportional');
+    render();
+  </script>
+</body>
+</html>
