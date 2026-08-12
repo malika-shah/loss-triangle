@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actuary Roulette | Loss Reserving Sandbox</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(23, 31, 51, 0.7);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent-blue: #38bdf8;
+      --accent-green: #34d399;
+      --accent-red: #f87171;
+      --accent-purple: #c084fc;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    h1 { font-size: 1.8rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
+    p.subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 0.25rem; }
+
+    /* Layout Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--accent-blue);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Controls */
+    .controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+    
+    button {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    button:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-1px); }
+    button.active { background: var(--accent-blue); color: #000; border-color: var(--accent-blue); font-weight: 600; }
+    button.chaos-btn { border-color: rgba(248, 113, 113, 0.4); color: var(--accent-red); }
+    button.chaos-btn:hover { background: rgba(248, 113, 113, 0.2); }
+
+    /* Triangle Table Grid */
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th, td {
+      padding: 0.6rem 0.8rem;
+      text-align: right;
+      font-size: 0.85rem;
+      font-mono: monospace;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    th { background: rgba(0, 0, 0, 0.3); color: var(--text-muted); font-weight: 600; }
+    th.first-col, td.first-col { text-align: left; font-weight: 600; color: var(--text-muted); }
+
+    /* Cell Types */
+    td.actual { background: rgba(56, 189, 248, 0.1); color: var(--accent-blue); cursor: pointer; }
+    td.actual:hover { background: rgba(56, 189, 248, 0.25); }
+    td.outlier { text-decoration: line-through; opacity: 0.4; background: rgba(248, 113, 113, 0.1); color: var(--accent-red); }
+    td.forecast { background: rgba(192, 132, 252, 0.08); color: var(--accent-purple); font-style: italic; }
+    td.empty { background: transparent; }
+
+    /* Stats Panel */
+    .stat-box {
+      margin-bottom: 1.25rem;
+      background: rgba(0,0,0,0.2);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent-blue);
+    }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-val { font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+    .status-safe { background: rgba(52, 211, 153, 0.2); color: var(--accent-green); }
+    .status-warn { background: rgba(248, 113, 113, 0.2); color: var(--accent-red); }
+
+    /* Explainer Box */
+    .explainer {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      background: rgba(255,255,255,0.03);
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: 1px dashed var(--border);
+    }
+    .explainer strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🛡️ Actuary Roulette: The Claims Tail Sandbox</h1>
+    <p class="subtitle">Why insurance companies go broke predicting the future using historical claims data.</p>
+  </header>
+
+  <div class="dashboard-grid">
+    
+    <div class="card">
+      <div class="card-title">
+        <span>Claims Loss Triangle ($ Thousands)</span>
+        <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">💡 Click blue cells to strike out outliers</span>
+      </div>
+
+      <div class="controls">
+        <button id="btn-auto" class="active" onclick="switchLOB('auto')">🚗 Auto Insurance (Short Tail)</button>
+        <button id="btn-cyber" onclick="switchLOB('cyber')">💻 Cyber Liability (Long Tail)</button>
+        <button class="chaos-btn" onclick="applyChaos('socialInflation')">⚖️ Trigger Litigation Spike (+30%)</button>
+        <button onclick="resetData()">🔄 Reset Matrix</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th class="first-col">Accident Year</th>
+              <th>Year 1 (0-12m)</th>
+              <th>Year 2 (12-24m)</th>
+              <th>Year 3 (24-36m)</th>
+              <th>Year 4 (36-48m)</th>
+            </tr>
+          </thead>
+          <tbody id="triangle-body">
+            </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 1rem; display: flex; gap: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
+        <span style="display: flex; align-items: center; gap: 0.4rem;">
+          <span style="width: 10px; height: 10px; background: rgba(56, 189, 248, 0.4); border-radius: 2px;"></span> Paid Claims (Historical)
+        </span>
+        <span style="display: flex; align-items: center; gap: 0.4rem;">
+          <span style="width: 10px; height: 10px; background: rgba(192, 132, 252, 0.4); border-radius: 2px;"></span> Actuarial Forecast (Future)
+        </span>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">Corporate Solvency Gauge</div>
+        
+        <div class="stat-box">
+          <div class="stat-label">Required Future Cash Reserves</div>
+          <div class="stat-val" id="stat-reserves" style="color: var(--accent-purple);">$0</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">Cash that MUST be held today to pay future claims.</div>
+        </div>
+
+        <div class="stat-box" style="border-left-color: var(--accent-green);">
+          <div class="stat-label">Capital Surplus (Bank Account)</div>
+          <div class="stat-val" style="color: var(--accent-green);">$2,500k</div>
+          <div id="solvency-badge" class="status-badge status-safe">SOLVENT: Adequate Reserves</div>
+        </div>
+
+        <div class="explainer">
+          <strong>How to read this in 10 seconds:</strong><br>
+          • <strong>Accident Year:</strong> The year injuries or crashes happened.<br>
+          • <strong>Development Years:</strong> How long it takes claims to settle. Auto claims settle fast. Cyber claims take years as lawyers argue!<br>
+          • <strong>The Purple Cells:</strong> The blank future cells are calculated automatically using the growth rate (LDF) of historical years.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Base Datasets (Cumulative Paid Losses in $ Thousands)
+    const datasets = {
+      auto: [
+        [1000, 1500, 1700, 1750], // 2021
+        [1100, 1650, 1870, null], // 2022
+        [1050, 1575, null, null], // 2023
+        [1200, null, null, null]  // 2024
+      ],
+      cyber: [
+        [300,  800,  1800, 3200], // 2021 (Long tail explode!)
+        [350,  950,  2100, null], // 2022
+        [320,  900,  null, null], // 2023
+        [400,  null, null, null]  // 2024
+      ]
+    };
+
+    let currentLOB = 'auto';
+    let rawData = JSON.parse(JSON.stringify(datasets.auto));
+    let struckCells = new Set(); // Stores "row-col" strings of ignored outliers
+
+    function switchLOB(lob) {
+      currentLOB = lob;
+      document.getElementById('btn-auto').classList.toggle('active', lob === 'auto');
+      document.getElementById('btn-cyber').classList.toggle('active', lob === 'cyber');
+      resetData();
+    }
+
+    function resetData() {
+      rawData = JSON.parse(JSON.stringify(datasets[currentLOB]));
+      struckCells.clear();
+      recalculateTriangle();
+    }
+
+    function toggleCellStrike(r, c) {
+      const key = `${r}-${c}`;
+      if (struckCells.has(key)) {
+        struckCells.delete(key);
+      } else {
+        struckCells.add(key);
+      }
+      recalculateTriangle();
+    }
+
+    function applyChaos(type) {
+      if (type === 'socialInflation') {
+        // Boost latest dev factors / values by +30%
+        for(let r=0; r<4; r++) {
+          for(let c=0; c<4; c++) {
+            if (rawData[r][c] !== null && c > 0) {
+              rawData[r][c] = Math.round(rawData[r][c] * 1.3);
+            }
+          }
+        }
+      }
+      recalculateTriangle();
+    }
+
+    function calculateLDFs(data) {
+      // Calculate Loss Development Factors (Link Ratios)
+      let ldfs = [];
+      for (let c = 0; c < 3; c++) {
+        let sumPrior = 0;
+        let sumNext = 0;
+        for (let r = 0; r < 3 - c; r++) {
+          if (!struckCells.has(`${r}-${c}`) && !struckCells.has(`${r}-${c+1}`)) {
+            if (data[r][c] !== null && data[r][c+1] !== null) {
+              sumPrior += data[r][c];
+              sumNext += data[r][c+1];
+            }
+          }
+        }
+        // Fallback LDF if all struck out
+        ldfs.push(sumPrior > 0 ? sumNext / sumPrior : 1.1);
+      }
+      return ldfs;
+    }
+
+    function recalculateTriangle() {
+      const ldfs = calculateLDFs(rawData);
+      let grid = JSON.parse(JSON.stringify(rawData));
+      let totalReserve = 0;
+
+      // Project missing future cells using Chain Ladder Math
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (grid[r][c] === null) {
+            const prevVal = grid[r][c - 1];
+            const factor = ldfs[c - 1];
+            grid[r][c] = Math.round(prevVal * factor);
+            
+            // If this is the final year column (dev year 4), add the unpaid gap to required reserves
+            if (c === 3) {
+              const latestActual = rawData[r].filter(v => v !== null).pop();
+              totalReserve += (grid[r][3] - latestActual);
+            }
+          }
+        }
+      }
+
+      renderTable(grid);
+      updateSolvency(totalReserve);
+    }
+
+    function renderTable(grid) {
+      const tbody = document.getElementById('triangle-body');
+      tbody.innerHTML = '';
+
+      const years = ['2021', '2022', '2023', '2024'];
+
+      for (let r = 0; r < 4; r++) {
+        const tr = document.createElement('tr');
+        
+        // Row Header
+        const th = document.createElement('td');
+        th.className = 'first-col';
+        th.innerText = `AY ${years[r]}`;
+        tr.appendChild(th);
+
+        for (let c = 0; c < 4; c++) {
+          const td = document.createElement('td');
+          const isActual = rawData[r][c] !== null;
+          const isStruck = struckCells.has(`${r}-${c}`);
+          
+          if (isActual) {
+            td.className = isStruck ? 'actual outlier' : 'actual';
+            td.innerText = `$${grid[r][c]}`;
+            td.title = "Click to strike out as outlier";
+            td.onclick = () => toggleCellStrike(r, c);
+          } else {
+            td.className = 'forecast';
+            td.innerText = `$${grid[r][c]}*`;
+            td.title = "Actuarial Projected Reserve";
+          }
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    }
+
+    function updateSolvency(requiredReserves) {
+      const reservesElem = document.getElementById('stat-reserves');
+      const badgeElem = document.getElementById('solvency-badge');
+      
+      reservesElem.innerText = `$${requiredReserves.toLocaleString()}k`;
+
+      const availableCapital = 2500; // $2.5M fixed capital baseline
+      
+      if (requiredReserves > availableCapital) {
+        badgeElem.innerText = "🚨 INSOLVENT: Reserves Exceed Capital!";
+        badgeElem.className = "status-badge status-warn";
+        reservesElem.style.color = "var(--accent-red)";
+      } else {
+        badgeElem.innerText = "SOLVENT: Adequate Reserves";
+        badgeElem.className = "status-badge status-safe";
+        reservesElem.style.color = "var(--accent-purple)";
+      }
+    }
+
+    // Initial Launch
+    recalculateTriangle();
+  </script>
+</body>
+</html>
