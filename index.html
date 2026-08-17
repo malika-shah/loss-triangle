@@ -33,7 +33,8 @@
       flex-direction: column;
       gap: 1.25rem;
       background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.05), transparent 70%);
-      overflow-x: hidden;
+      overflow-x: hidden;overflow-y: auto;
+  touch-action: manipulation;
     }
 
     header {
@@ -125,7 +126,7 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      z-index: 10;
+      z-index: 10;touch-action: none;
     }
 
     .resizer::before {
@@ -322,6 +323,66 @@
     .summary-label { font-size: 0.68rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase; }
     .summary-val { font-size: 1.1rem; font-family: var(--font-mono); font-weight: 800; }
     .summary-pct { font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted); text-align: right; }
+  /* --- Mobile Portrait Layout (Stack Panels) --- */
+@media (max-width: 768px) {
+  .dashboard {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem;
+  }
+
+  .resizer {
+    display: none; /* Hide vertical splitter on stacked layouts */
+  }
+
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* --- Mobile Landscape Optimization (max-height: 500px) --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  body {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  header {
+    padding-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-size: 0.95rem;
+  }
+
+  .card {
+    padding: 0.85rem;
+    gap: 0.75rem;
+  }
+
+  .tower-layer {
+    min-height: 45px;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .layer-paid {
+    font-size: 0.95rem;
+  }
+
+  .claim-amount {
+    font-size: 1.5rem;
+  }
+
+  .preset-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
   </style>
 </head>
 <body>
