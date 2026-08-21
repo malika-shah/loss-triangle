@@ -6,18 +6,19 @@
   <title>Reinsurance Risk Tower // Dynamic Drag Engine</title>
   <style>
     :root {
-      --bg: #05070a;
-      --card-bg: rgba(13, 16, 23, 0.75);
-      --border: rgba(255, 255, 255, 0.08);
-      --border-bright: rgba(255, 255, 255, 0.2);
+      --bg: #07090e;
+      --card-bg: rgba(15, 20, 30, 0.85);
+      --border: rgba(255, 255, 255, 0.12);
+      --border-bright: rgba(255, 255, 255, 0.3);
       --text: #f8fafc;
-      --text-muted: #64748b;
+      --text-muted: #94a3b8;
       --font-mono: 'JetBrains Mono', Consolas, monospace;
 
-      --color-l1: #f59e0b;
-      --color-l2: #10b981;
-      --color-l3: #06b6d4;
-      --color-l4: #a855f7;
+      /* High-contrast vivid layer colors */
+      --color-l1: #ffb703;
+      --color-l2: #00f5d4;
+      --color-l3: #00bbf9;
+      --color-l4: #f15bb5;
 
       --zoom-scale: 1;
     }
@@ -32,9 +33,10 @@
       display: flex;
       flex-direction: column;
       gap: 1.25rem;
-      background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.05), transparent 70%);
-      overflow-x: hidden;overflow-y: auto;
-  touch-action: manipulation;
+      background-image: radial-gradient(circle at 50% 0%, rgba(0, 187, 249, 0.08), transparent 70%);
+      overflow-x: hidden;
+      overflow-y: auto;
+      touch-action: manipulation;
     }
 
     header {
@@ -48,13 +50,13 @@
     .brand { display: flex; align-items: center; gap: 0.75rem; }
     .brand-icon { width: 14px; height: 14px; background: var(--color-l3); border-radius: 50%; box-shadow: 0 0 12px var(--color-l3); }
     h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
-    .tag { font-size: 0.68rem; font-family: var(--font-mono); color: var(--color-l3); background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.25); padding: 0.2rem 0.5rem; border-radius: 4px; }
+    .tag { font-size: 0.68rem; font-family: var(--font-mono); color: var(--color-l3); background: rgba(0, 187, 249, 0.12); border: 1px solid rgba(0, 187, 249, 0.3); padding: 0.2rem 0.5rem; border-radius: 4px; }
 
     .header-actions { display: flex; align-items: center; gap: 1rem; }
 
     .mode-switch {
       display: flex;
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 2px;
@@ -82,7 +84,7 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
       padding: 0.25rem 0.6rem;
       border-radius: 8px;
@@ -92,7 +94,7 @@
     .scale-val { font-size: 0.75rem; font-family: var(--font-mono); font-weight: 700; color: var(--color-l3); min-width: 40px; text-align: center; }
 
     .scale-btn {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.12);
       border: 1px solid var(--border);
       color: var(--text);
       width: 24px;
@@ -104,6 +106,7 @@
       justify-content: center;
       font-weight: bold;
     }
+    .scale-btn:hover { background: rgba(255, 255, 255, 0.25); }
 
     .dashboard-wrapper {
       transform-origin: top left;
@@ -112,7 +115,6 @@
       transition: transform 0.15s ease-out;
     }
 
-    /* DEFAULT: Equal 50/50 split between Waterfall and Controls */
     .dashboard {
       display: grid;
       grid-template-columns: 1fr 12px 1fr;
@@ -126,21 +128,22 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      z-index: 10;touch-action: none;
+      z-index: 10;
+      touch-action: none;
     }
 
     .resizer::before {
       content: '';
       width: 4px;
       height: 40px;
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 2px;
       transition: background 0.2s, height 0.2s;
     }
 
     .resizer:hover::before, .resizer.dragging::before {
       background: var(--color-l3);
-      box-shadow: 0 0 8px var(--color-l3);
+      box-shadow: 0 0 10px var(--color-l3);
       height: 60px;
     }
 
@@ -170,7 +173,7 @@
       display: flex;
       flex-direction: column;
       gap: 0;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.75);
       padding: 0.85rem;
       border-radius: 12px;
       border: 1px solid var(--border);
@@ -179,7 +182,7 @@
 
     .tower-layer {
       position: relative;
-      background: rgba(255, 255, 255, 0.015);
+      background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
@@ -191,14 +194,14 @@
       min-height: 60px;
     }
 
-    .tower-layer.active-l1 { border-color: rgba(245, 158, 11, 0.5); box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
-    .tower-layer.active-l2 { border-color: rgba(16, 185, 129, 0.5); box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
-    .tower-layer.active-l3 { border-color: rgba(6, 182, 212, 0.5); box-shadow: 0 0 20px rgba(6, 182, 212, 0.15); }
-    .tower-layer.active-l4 { border-color: rgba(168, 85, 247, 0.5); box-shadow: 0 0 20px rgba(168, 85, 247, 0.15); }
+    .tower-layer.active-l1 { border-color: var(--color-l1); box-shadow: inset 0 0 15px rgba(255, 183, 3, 0.2); }
+    .tower-layer.active-l2 { border-color: var(--color-l2); box-shadow: inset 0 0 15px rgba(0, 245, 212, 0.2); }
+    .tower-layer.active-l3 { border-color: var(--color-l3); box-shadow: inset 0 0 15px rgba(0, 187, 249, 0.2); }
+    .tower-layer.active-l4 { border-color: var(--color-l4); box-shadow: inset 0 0 15px rgba(241, 91, 181, 0.2); }
 
     .layer-resizer {
-      height: 12px;
-      margin: -6px 0;
+      height: 14px;
+      margin: -7px 0;
       position: relative;
       z-index: 20;
       cursor: ns-resize;
@@ -211,32 +214,35 @@
       content: '';
       width: 100%;
       height: 2px;
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.25);
       transition: background 0.2s, height 0.2s;
     }
 
     .layer-resizer:hover::after, .layer-resizer.dragging::after {
       background: var(--color-l3);
       height: 4px;
-      box-shadow: 0 0 8px var(--color-l3);
+      box-shadow: 0 0 10px var(--color-l3);
     }
 
     .layer-resizer-badge {
       position: absolute;
-      background: var(--bg);
-      border: 1px solid var(--border-bright);
-      color: var(--color-l3);
+      background: #10141d;
+      border: 1px solid var(--color-l3);
+      color: #ffffff;
       font-family: var(--font-mono);
-      font-size: 0.62rem;
-      padding: 0.1rem 0.4rem;
+      font-size: 0.68rem;
+      font-weight: bold;
+      padding: 0.15rem 0.5rem;
       border-radius: 10px;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
+      opacity: 0.85;
+      box-shadow: 0 0 8px rgba(0, 187, 249, 0.4);
+      transition: opacity 0.2s, transform 0.2s;
     }
 
     .layer-resizer:hover .layer-resizer-badge, .layer-resizer.dragging .layer-resizer-badge {
       opacity: 1;
+      transform: scale(1.1);
     }
 
     .liquid-wrapper {
@@ -250,7 +256,8 @@
       overflow: visible;
     }
 
-    .liquid-body { width: 100%; height: 100%; background-color: var(--layer-color); opacity: 0.4; }
+    /* Boosted Opacity for clearer liquid visibility */
+    .liquid-body { width: 100%; height: 100%; background-color: var(--layer-color); opacity: 0.65; }
 
     .wave {
       position: absolute;
@@ -264,14 +271,14 @@
     }
 
     .wave.front {
-      top: -18px; height: 22px; opacity: 0.95;
+      top: -18px; height: 22px; opacity: 1.0;
       -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 100' preserveAspectRatio='none'%3E%3Cpath d='M 0 40 Q 200 90, 400 40 T 800 40 L 800 100 L 0 100 Z' fill='%23000000'/%3E%3C/svg%3E");
       mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 100' preserveAspectRatio='none'%3E%3Cpath d='M 0 40 Q 200 90, 400 40 T 800 40 L 800 100 L 0 100 Z' fill='%23000000'/%3E%3C/svg%3E");
       animation: wave-front-anim 1.6s linear infinite; z-index: 2;
     }
 
     .wave.back {
-      top: -24px; height: 28px; opacity: 0.5;
+      top: -24px; height: 28px; opacity: 0.6;
       -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 100' preserveAspectRatio='none'%3E%3Cpath d='M 0 50 Q 200 10, 400 50 T 800 50 L 800 100 L 0 100 Z' fill='%23000000'/%3E%3C/svg%3E");
       mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 100' preserveAspectRatio='none'%3E%3Cpath d='M 0 50 Q 200 10, 400 50 T 800 50 L 800 100 L 0 100 Z' fill='%23000000'/%3E%3C/svg%3E");
       animation: wave-back-anim 2.4s linear infinite; z-index: 1;
@@ -282,107 +289,54 @@
 
     .layer-header, .layer-stats { position: relative; z-index: 3; }
     .layer-header { display: flex; justify-content: space-between; align-items: center; }
-    .layer-title { font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
-    .dot { width: 7px; height: 7px; border-radius: 50%; }
-    .layer-range { font-size: 0.7rem; font-family: var(--font-mono); color: var(--text-muted); }
+    .layer-title { font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .layer-range { font-size: 0.72rem; font-family: var(--font-mono); color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
     .layer-stats { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 0.2rem; }
-    .layer-paid { font-size: 1.15rem; font-family: var(--font-mono); font-weight: 800; }
+    .layer-paid { font-size: 1.25rem; font-family: var(--font-mono); font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.9); }
 
     .layer-badge {
-      font-size: 0.65rem; font-family: var(--font-mono); padding: 0.2rem 0.5rem; border-radius: 4px;
-      background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--border);
+      font-size: 0.68rem; font-family: var(--font-mono); font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 4px;
+      background: rgba(0, 0, 0, 0.6); color: var(--text-muted); border: 1px solid var(--border); backdrop-filter: blur(4px);
     }
 
     .slider-box {
-      background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;
+      background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;
     }
 
     .claim-header { display: flex; justify-content: space-between; align-items: center; }
     .claim-amount { font-size: 2.2rem; font-family: var(--font-mono); font-weight: 800; }
 
     .exact-input-wrap {
-      display: flex; align-items: center; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 6px; padding: 0.2rem 0.5rem;
+      display: flex; align-items: center; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-bright); border-radius: 6px; padding: 0.2rem 0.5rem;
     }
 
     .exact-input-wrap span { font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted); }
     .exact-input { background: transparent; border: none; color: var(--color-l3); font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; width: 60px; text-align: right; outline: none; }
 
-    input[type="range"] { width: 100%; height: 6px; accent-color: var(--color-l3); background: rgba(255, 255, 255, 0.1); border-radius: 3px; cursor: pointer; }
+    input[type="range"] { width: 100%; height: 6px; accent-color: var(--color-l3); background: rgba(255, 255, 255, 0.15); border-radius: 3px; cursor: pointer; }
 
     .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
 
     button.preset-btn {
-      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); color: var(--text); padding: 0.6rem; border-radius: 8px; font-size: 0.72rem; font-weight: 600; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 0.15rem;
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border); color: var(--text); padding: 0.6rem; border-radius: 8px; font-size: 0.72rem; font-weight: 600; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 0.15rem; transition: all 0.15s ease;
     }
 
-    button.preset-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--border-bright); }
+    button.preset-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--color-l3); }
     button.preset-btn span.val { font-family: var(--font-mono); color: var(--color-l3); }
 
     .summary-grid { display: flex; flex-direction: column; gap: 0.6rem; }
-    .summary-card { background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+    .summary-card { background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 0.9rem; display: flex; justify-content: space-between; align-items: center; }
     .summary-label { font-size: 0.68rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase; }
     .summary-val { font-size: 1.1rem; font-family: var(--font-mono); font-weight: 800; }
     .summary-pct { font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted); text-align: right; }
-  /* --- Mobile Portrait Layout (Stack Panels) --- */
-@media (max-width: 768px) {
-  .dashboard {
-    grid-template-columns: 1fr !important;
-    gap: 1.25rem;
-  }
 
-  .resizer {
-    display: none; /* Hide vertical splitter on stacked layouts */
-  }
-
-  header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-}
-
-/* --- Mobile Landscape Optimization (max-height: 500px) --- */
-@media (max-height: 500px) and (orientation: landscape) {
-  body {
-    padding: 0.75rem;
-    gap: 0.75rem;
-  }
-
-  header {
-    padding-bottom: 0.5rem;
-  }
-
-  h1 {
-    font-size: 0.95rem;
-  }
-
-  .card {
-    padding: 0.85rem;
-    gap: 0.75rem;
-  }
-
-  .tower-layer {
-    min-height: 45px;
-    padding: 0.4rem 0.75rem;
-  }
-
-  .layer-paid {
-    font-size: 0.95rem;
-  }
-
-  .claim-amount {
-    font-size: 1.5rem;
-  }
-
-  .preset-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
+    @media (max-width: 768px) {
+      .dashboard { grid-template-columns: 1fr !important; gap: 1.25rem; }
+      .resizer { display: none; }
+      header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+      .header-actions { width: 100%; justify-content: space-between; }
+    }
   </style>
 </head>
 <body>
@@ -396,15 +350,15 @@
 
     <div class="header-actions">
       <div class="mode-switch">
-        <button class="mode-btn" id="btn-mode-equal" onclick="setHeightMode('equal')">Equal Height</button>
-        <button class="mode-btn active" id="btn-mode-prop" onclick="setHeightMode('proportional')">To Scale</button>
+        <button class="mode-btn" id="btn-mode-equal">Equal Height</button>
+        <button class="mode-btn active" id="btn-mode-prop">To Scale</button>
       </div>
 
       <div class="scale-controls">
         <span class="scale-label">ZOOM:</span>
-        <button class="scale-btn" onclick="changeScale(-0.1)">-</button>
+        <button class="scale-btn" id="btn-zoom-out">-</button>
         <span class="scale-val" id="scale-display">100%</span>
-        <button class="scale-btn" onclick="changeScale(0.1)">+</button>
+        <button class="scale-btn" id="btn-zoom-in">+</button>
       </div>
     </div>
   </header>
@@ -427,7 +381,7 @@
               <div class="liquid-body"></div>
             </div>
             <div class="layer-header">
-              <div class="layer-title"><span class="dot" style="background: var(--color-l4); box-shadow: 0 0 8px var(--color-l4);"></span> Catastrophe Reinsurance</div>
+              <div class="layer-title"><span class="dot" style="background: var(--color-l4); box-shadow: 0 0 10px var(--color-l4);"></span> Catastrophe Reinsurance</div>
               <div class="layer-range" id="range-4">---</div>
             </div>
             <div class="layer-stats">
@@ -450,7 +404,7 @@
               <div class="liquid-body"></div>
             </div>
             <div class="layer-header">
-              <div class="layer-title"><span class="dot" style="background: var(--color-l3); box-shadow: 0 0 8px var(--color-l3);"></span> Working Reinsurance</div>
+              <div class="layer-title"><span class="dot" style="background: var(--color-l3); box-shadow: 0 0 10px var(--color-l3);"></span> Working Reinsurance</div>
               <div class="layer-range" id="range-3">---</div>
             </div>
             <div class="layer-stats">
@@ -473,7 +427,7 @@
               <div class="liquid-body"></div>
             </div>
             <div class="layer-header">
-              <div class="layer-title"><span class="dot" style="background: var(--color-l2); box-shadow: 0 0 8px var(--color-l2);"></span> Primary Insurer Retention</div>
+              <div class="layer-title"><span class="dot" style="background: var(--color-l2); box-shadow: 0 0 10px var(--color-l2);"></span> Primary Insurer Retention</div>
               <div class="layer-range" id="range-2">---</div>
             </div>
             <div class="layer-stats">
@@ -496,7 +450,7 @@
               <div class="liquid-body"></div>
             </div>
             <div class="layer-header">
-              <div class="layer-title"><span class="dot" style="background: var(--color-l1); box-shadow: 0 0 8px var(--color-l1);"></span> Policyholder Deductible</div>
+              <div class="layer-title"><span class="dot" style="background: var(--color-l1); box-shadow: 0 0 10px var(--color-l1);"></span> Policyholder Deductible</div>
               <div class="layer-range" id="range-1">---</div>
             </div>
             <div class="layer-stats">
@@ -536,19 +490,19 @@
             <div style="font-size: 0.68rem; font-family: var(--font-mono); color: var(--text-muted);">PRESET EVENT SHOCKS:</div>
 
             <div class="preset-grid">
-              <button class="preset-btn" onclick="setLoss(0.8)">
+              <button class="preset-btn" data-loss="0.8">
                 <span>🌩️ Hailstorm</span>
                 <span class="val">$0.8M</span>
               </button>
-              <button class="preset-btn" onclick="setLoss(6.5)">
+              <button class="preset-btn" data-loss="6.5">
                 <span>🔥 Commercial Fire</span>
                 <span class="val">$6.5M</span>
               </button>
-              <button class="preset-btn" onclick="setLoss(35.0)">
+              <button class="preset-btn" data-loss="35.0">
                 <span>🌀 Cat 4 Hurricane</span>
                 <span class="val">$35.0M</span>
               </button>
-              <button class="preset-btn" onclick="setLoss(85.0)">
+              <button class="preset-btn" data-loss="85.0">
                 <span>🌋 Regional Quake</span>
                 <span class="val">$85.0M</span>
               </button>
@@ -592,222 +546,229 @@
   </div>
 
   <script>
-    // --- Dynamic Layer Limit Endpoints ---
-    let limits = [0, 1, 10, 50, 100];
+    document.addEventListener('DOMContentLoaded', () => {
+      // --- App State ---
+      const limits = [0, 1, 10, 50, 100];
+      const layerDefs = [
+        { id: 1, name: 'Policyholder Deductible', cls: 'active-l1' },
+        { id: 2, name: 'Primary Insurer Retention', cls: 'active-l2' },
+        { id: 3, name: 'Working Reinsurance', cls: 'active-l3' },
+        { id: 4, name: 'Catastrophe Reinsurance', cls: 'active-l4' }
+      ];
 
-    const layerDefs = [
-      { id: 1, name: 'Policyholder Deductible', cls: 'active-l1' },
-      { id: 2, name: 'Primary Insurer Retention', cls: 'active-l2' },
-      { id: 3, name: 'Working Reinsurance', cls: 'active-l3' },
-      { id: 4, name: 'Catastrophe Reinsurance', cls: 'active-l4' }
-    ];
+      let heightMode = 'proportional';
+      let currentScale = 1.0;
+      let activeLayerResizer = null;
+      let startY = 0;
+      let startLimitVal = 0;
+      let isPanelDragging = false;
 
-    // DEFAULT: Set heightMode to 'proportional' by default
-    let heightMode = 'proportional';
+      // Simulation engine values
+      const slider = document.getElementById('loss-slider');
+      const exactInput = document.getElementById('exact-num');
+      let targetLoss = parseFloat(slider.value);
+      let currentLoss = targetLoss;
 
-    function updateHeightsAndLabels() {
-      layerDefs.forEach((l, idx) => {
-        const min = limits[idx];
-        const max = limits[idx + 1];
-        const limit = max - min;
+      // --- Layout & Render Helpers ---
+      function updateHeightsAndLabels() {
+        layerDefs.forEach((l, idx) => {
+          const min = limits[idx];
+          const max = limits[idx + 1];
+          const limit = max - min;
 
-        document.getElementById(`range-${l.id}`).innerText = `$${min.toFixed(1)}M – $${max.toFixed(1)}M ($${limit.toFixed(1)}M Limit)`;
+          document.getElementById(`range-${l.id}`).innerText = `$${min.toFixed(1)}M – $${max.toFixed(1)}M ($${limit.toFixed(1)}M Limit)`;
 
-        const el = document.getElementById(`layer-${l.id}`);
-        if (heightMode === 'proportional') {
-          const propH = Math.max(60, (limit / 100) * 420);
-          el.style.height = `${propH}px`;
-        } else {
-          el.style.height = '110px';
+          const el = document.getElementById(`layer-${l.id}`);
+          if (heightMode === 'proportional') {
+            const propH = Math.max(60, (limit / 100) * 420);
+            el.style.height = `${propH}px`;
+          } else {
+            el.style.height = '110px';
+          }
+        });
+
+        document.getElementById('resizer-badge-1').innerText = `$${limits[1].toFixed(1)}M`;
+        document.getElementById('resizer-badge-2').innerText = `$${limits[2].toFixed(1)}M`;
+        document.getElementById('resizer-badge-3').innerText = `$${limits[3].toFixed(1)}M`;
+      }
+
+      function setHeightMode(mode) {
+        heightMode = mode;
+        document.getElementById('btn-mode-equal').classList.toggle('active', mode === 'equal');
+        document.getElementById('btn-mode-prop').classList.toggle('active', mode === 'proportional');
+        document.getElementById('scale-indicator').innerText = mode === 'equal' ? 'Equal Layer Heights' : 'Proportional (To Scale)';
+        updateHeightsAndLabels();
+      }
+
+      function changeScale(delta) {
+        currentScale = Math.max(0.75, Math.min(1.4, currentScale + delta));
+        document.documentElement.style.setProperty('--zoom-scale', currentScale);
+        document.getElementById('scale-display').innerText = `${Math.round(currentScale * 100)}%`;
+      }
+
+      function setLoss(val) {
+        slider.value = val;
+        exactInput.value = val;
+        targetLoss = val;
+      }
+
+      // --- Event Listeners Binding ---
+      document.getElementById('btn-mode-equal').addEventListener('click', () => setHeightMode('equal'));
+      document.getElementById('btn-mode-prop').addEventListener('click', () => setHeightMode('proportional'));
+
+      document.getElementById('btn-zoom-out').addEventListener('click', () => changeScale(-0.1));
+      document.getElementById('btn-zoom-in').addEventListener('click', () => changeScale(0.1));
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const lossVal = parseFloat(btn.getAttribute('data-loss'));
+          setLoss(lossVal);
+        });
+      });
+
+      slider.addEventListener('input', (e) => { 
+        targetLoss = parseFloat(e.target.value); 
+        exactInput.value = targetLoss.toFixed(1);
+      });
+
+      exactInput.addEventListener('input', (e) => {
+        let val = parseFloat(e.target.value);
+        if (!isNaN(val)) {
+          val = Math.max(0, Math.min(100, val));
+          targetLoss = val;
+          slider.value = val;
         }
       });
 
-      document.getElementById('resizer-badge-1').innerText = `$${limits[1].toFixed(1)}M`;
-      document.getElementById('resizer-badge-2').innerText = `$${limits[2].toFixed(1)}M`;
-      document.getElementById('resizer-badge-3').innerText = `$${limits[3].toFixed(1)}M`;
-    }
+      // Layer Boundary Dragging
+      [1, 2, 3].forEach(idx => {
+        const resizerEl = document.getElementById(`resizer-${idx}`);
+        resizerEl.addEventListener('mousedown', (e) => {
+          activeLayerResizer = idx;
+          startY = e.clientY;
+          startLimitVal = limits[idx];
+          resizerEl.classList.add('dragging');
+          document.body.style.cursor = 'ns-resize';
+          document.body.style.userSelect = 'none';
+        });
+      });
 
-    function setHeightMode(mode) {
-      heightMode = mode;
-      document.getElementById('btn-mode-equal').classList.toggle('active', mode === 'equal');
-      document.getElementById('btn-mode-prop').classList.toggle('active', mode === 'proportional');
-      document.getElementById('scale-indicator').innerText = mode === 'equal' ? 'Equal Layer Heights' : 'Proportional (To Scale)';
-      updateHeightsAndLabels();
-    }
+      // Horizontal Panel Dragging
+      const panelResizer = document.getElementById('resizer');
+      const dashboard = document.getElementById('dashboard');
 
-    // --- Interactive Layer Boundary Dragging ---
-    let activeLayerResizer = null;
-    let startY = 0;
-    let startLimitVal = 0;
-
-    [1, 2, 3].forEach(idx => {
-      const resizerEl = document.getElementById(`resizer-${idx}`);
-      
-      resizerEl.addEventListener('mousedown', (e) => {
-        activeLayerResizer = idx;
-        startY = e.clientY;
-        startLimitVal = limits[idx];
-        resizerEl.classList.add('dragging');
-        document.body.style.cursor = 'ns-resize';
+      panelResizer.addEventListener('mousedown', () => {
+        isPanelDragging = true;
+        panelResizer.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
       });
-    });
 
-    document.addEventListener('mousemove', (e) => {
-      if (activeLayerResizer === null) return;
+      document.addEventListener('mousemove', (e) => {
+        // Handle Layer Boundary Dragging
+        if (activeLayerResizer !== null) {
+          const deltaY = (startY - e.clientY) / currentScale;
+          const stepSensitivity = 0.2;
+          let newVal = Math.round((startLimitVal + deltaY * stepSensitivity) * 2) / 2;
 
-      const deltaY = (startY - e.clientY) / currentScale;
-      const stepSensitivity = 0.2;
-      
-      let newVal = Math.round((startLimitVal + deltaY * stepSensitivity) * 2) / 2;
+          const minBound = limits[activeLayerResizer - 1] + 0.5;
+          const maxBound = limits[activeLayerResizer + 1] - 0.5;
 
-      const minBound = limits[activeLayerResizer - 1] + 0.5;
-      const maxBound = limits[activeLayerResizer + 1] - 0.5;
-
-      newVal = Math.max(minBound, Math.min(maxBound, newVal));
-      limits[activeLayerResizer] = newVal;
-
-      updateHeightsAndLabels();
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (activeLayerResizer !== null) {
-        document.getElementById(`resizer-${activeLayerResizer}`).classList.remove('dragging');
-        activeLayerResizer = null;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-      }
-    });
-
-    // --- Zoom Scale Control ---
-    let currentScale = 1.0;
-    function changeScale(delta) {
-      currentScale = Math.max(0.75, Math.min(1.4, currentScale + delta));
-      document.documentElement.style.setProperty('--zoom-scale', currentScale);
-      document.getElementById('scale-display').innerText = `${Math.round(currentScale * 100)}%`;
-    }
-
-    // --- Middle Panel Splitter ---
-    const resizer = document.getElementById('resizer');
-    const dashboard = document.getElementById('dashboard');
-    let isPanelDragging = false;
-
-    resizer.addEventListener('mousedown', () => {
-      isPanelDragging = true;
-      resizer.classList.add('dragging');
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (!isPanelDragging) return;
-      const rect = dashboard.getBoundingClientRect();
-      const mouseX = (e.clientX - rect.left) / currentScale;
-      const totalWidth = rect.width / currentScale;
-      const leftWidth = Math.max(300, Math.min(totalWidth - 280, mouseX - 6));
-      const rightWidth = totalWidth - leftWidth - 12;
-      dashboard.style.gridTemplateColumns = `${leftWidth}px 12px ${rightWidth}px`;
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isPanelDragging) {
-        isPanelDragging = false;
-        resizer.classList.remove('dragging');
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-      }
-    });
-
-    // --- Simulation Engine ---
-    const slider = document.getElementById('loss-slider');
-    const exactInput = document.getElementById('exact-num');
-    let targetLoss = parseFloat(slider.value);
-    let currentLoss = targetLoss;
-
-    function render() {
-      currentLoss += (targetLoss - currentLoss) * 0.18;
-      document.getElementById('claim-val').innerText = `$${currentLoss.toFixed(1)}M`;
-
-      let paidByLayer = {};
-
-      layerDefs.forEach((l, idx) => {
-        const min = limits[idx];
-        const max = limits[idx + 1];
-        const limit = max - min;
-
-        let paid = 0;
-        if (currentLoss > min) {
-          paid = Math.min(currentLoss - min, limit);
+          newVal = Math.max(minBound, Math.min(maxBound, newVal));
+          limits[activeLayerResizer] = newVal;
+          updateHeightsAndLabels();
         }
-        paidByLayer[l.id] = paid;
 
-        const fillPct = limit > 0 ? (paid / limit) * 100 : 0;
-        const fillEl = document.getElementById(`fill-${l.id}`);
-        fillEl.style.height = `${fillPct}%`;
-
-        const waves = fillEl.querySelectorAll('.wave');
-        waves.forEach(w => w.style.display = fillPct > 0 ? 'block' : 'none');
-
-        document.getElementById(`paid-${l.id}`).innerText = `$${paid.toFixed(1)}M`;
-
-        const badge = document.getElementById(`status-${l.id}`);
-        const card = document.getElementById(`layer-${l.id}`);
-
-        if (fillPct >= 100) {
-          badge.innerText = 'Exhausted';
-          badge.style.color = '#f43f5e';
-          card.className = `tower-layer ${l.cls}`;
-        } else if (fillPct > 0) {
-          badge.innerText = `${fillPct.toFixed(0)}% Attached`;
-          badge.style.color = 'var(--text)';
-          card.className = `tower-layer ${l.cls}`;
-        } else {
-          badge.innerText = '0% Attached';
-          badge.style.color = 'var(--text-muted)';
-          card.className = 'tower-layer';
+        // Handle Horizontal Splitter Dragging
+        if (isPanelDragging) {
+          const rect = dashboard.getBoundingClientRect();
+          const mouseX = (e.clientX - rect.left) / currentScale;
+          const totalWidth = rect.width / currentScale;
+          const leftWidth = Math.max(300, Math.min(totalWidth - 280, mouseX - 6));
+          const rightWidth = totalWidth - leftWidth - 12;
+          dashboard.style.gridTemplateColumns = `${leftWidth}px 12px ${rightWidth}px`;
         }
       });
 
-      const insured = paidByLayer[1];
-      const primary = paidByLayer[2];
-      const reinsurer = paidByLayer[3] + paidByLayer[4];
-      const safeTotal = currentLoss || 1;
+      document.addEventListener('mouseup', () => {
+        if (activeLayerResizer !== null) {
+          document.getElementById(`resizer-${activeLayerResizer}`).classList.remove('dragging');
+          activeLayerResizer = null;
+        }
+        if (isPanelDragging) {
+          isPanelDragging = false;
+          panelResizer.classList.remove('dragging');
+        }
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
 
-      document.getElementById('sum-insured-val').innerText = `$${insured.toFixed(1)}M`;
-      document.getElementById('sum-insured-pct').innerText = `${((insured / safeTotal) * 100).toFixed(1)}% of total`;
+      // --- Simulation Loop ---
+      function render() {
+        currentLoss += (targetLoss - currentLoss) * 0.18;
+        document.getElementById('claim-val').innerText = `$${currentLoss.toFixed(1)}M`;
 
-      document.getElementById('sum-primary-val').innerText = `$${primary.toFixed(1)}M`;
-      document.getElementById('sum-primary-pct').innerText = `${((primary / safeTotal) * 100).toFixed(1)}% of total`;
+        const paidByLayer = {};
 
-      document.getElementById('sum-reinsurer-val').innerText = `$${reinsurer.toFixed(1)}M`;
-      document.getElementById('sum-reinsurer-pct').innerText = `${((reinsurer / safeTotal) * 100).toFixed(1)}% of total`;
+        layerDefs.forEach((l, idx) => {
+          const min = limits[idx];
+          const max = limits[idx + 1];
+          const limit = max - min;
 
-      requestAnimationFrame(render);
-    }
+          let paid = 0;
+          if (currentLoss > min) {
+            paid = Math.min(currentLoss - min, limit);
+          }
+          paidByLayer[l.id] = paid;
 
-    slider.addEventListener('input', (e) => { 
-      targetLoss = parseFloat(e.target.value); 
-      exactInput.value = targetLoss.toFixed(1);
-    });
+          const fillPct = limit > 0 ? (paid / limit) * 100 : 0;
+          const fillEl = document.getElementById(`fill-${l.id}`);
+          fillEl.style.height = `${fillPct}%`;
 
-    exactInput.addEventListener('input', (e) => {
-      let val = parseFloat(e.target.value);
-      if (!isNaN(val)) {
-        val = Math.max(0, Math.min(100, val));
-        targetLoss = val;
-        slider.value = val;
+          const waves = fillEl.querySelectorAll('.wave');
+          waves.forEach(w => w.style.display = fillPct > 0 ? 'block' : 'none');
+
+          document.getElementById(`paid-${l.id}`).innerText = `$${paid.toFixed(1)}M`;
+
+          const badge = document.getElementById(`status-${l.id}`);
+          const card = document.getElementById(`layer-${l.id}`);
+
+          if (fillPct >= 100) {
+            badge.innerText = 'Exhausted';
+            badge.style.color = '#ff4d6d';
+            card.className = `tower-layer ${l.cls}`;
+          } else if (fillPct > 0) {
+            badge.innerText = `${fillPct.toFixed(0)}% Attached`;
+            badge.style.color = '#ffffff';
+            card.className = `tower-layer ${l.cls}`;
+          } else {
+            badge.innerText = '0% Attached';
+            badge.style.color = 'var(--text-muted)';
+            card.className = 'tower-layer';
+          }
+        });
+
+        const insured = paidByLayer[1];
+        const primary = paidByLayer[2];
+        const reinsurer = paidByLayer[3] + paidByLayer[4];
+        const safeTotal = currentLoss || 1;
+
+        document.getElementById('sum-insured-val').innerText = `$${insured.toFixed(1)}M`;
+        document.getElementById('sum-insured-pct').innerText = `${((insured / safeTotal) * 100).toFixed(1)}% of total`;
+
+        document.getElementById('sum-primary-val').innerText = `$${primary.toFixed(1)}M`;
+        document.getElementById('sum-primary-pct').innerText = `${((primary / safeTotal) * 100).toFixed(1)}% of total`;
+
+        document.getElementById('sum-reinsurer-val').innerText = `$${reinsurer.toFixed(1)}M`;
+        document.getElementById('sum-reinsurer-pct').innerText = `${((reinsurer / safeTotal) * 100).toFixed(1)}% of total`;
+
+        requestAnimationFrame(render);
       }
+
+      // Initialize Application
+      setHeightMode('proportional');
+      render();
     });
-
-    function setLoss(val) {
-      slider.value = val;
-      exactInput.value = val;
-      targetLoss = val;
-    }
-
-    // Initialize in 'proportional' mode
-    setHeightMode('proportional');
-    render();
   </script>
 </body>
 </html>
